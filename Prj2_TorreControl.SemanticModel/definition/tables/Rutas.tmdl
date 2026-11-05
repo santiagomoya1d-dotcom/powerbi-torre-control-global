@@ -1,0 +1,58 @@
+/// Rutas de la red, con su vía, tránsito previsto y flete de referencia.
+table Rutas
+	lineageTag: e065d4a3-50e6-4be5-af00-bd2a4dcdce6c
+
+	column RutaID
+		dataType: string
+		lineageTag: d3bed9a9-4f70-4cc9-8737-dac90bc71ce6
+		sourceColumn: RutaID
+
+	column Modo
+		dataType: string
+		lineageTag: 81a373f3-ad38-4301-97da-db8c790eb32a
+		sourceColumn: Modo
+
+	column Vía
+		dataType: string
+		lineageTag: d7a0a0f4-f538-4a8a-87ff-af76db4914f6
+		sourceColumn: Vía
+
+	column Destino
+		dataType: string
+		lineageTag: fc3c48f2-ae24-4925-8b22-1459f7110189
+		sourceColumn: Destino
+
+	column 'Días previstos'
+		dataType: int64
+		lineageTag: 65e76cf6-2657-4a40-940e-09a7de38f97c
+		summarizeBy: none
+		sourceColumn: Días previstos
+
+	column 'Flete (€)'
+		dataType: int64
+		lineageTag: cbf96ad4-79f7-4e49-a1f0-1ca6916f515d
+		summarizeBy: none
+		sourceColumn: Flete (€)
+
+	column Km
+		dataType: int64
+		lineageTag: 9bed6ff8-ac7c-40ca-b416-cedda9ca7a37
+		summarizeBy: none
+		sourceColumn: Km
+
+	column Alternativa
+		dataType: string
+		lineageTag: a42247a0-1e21-4e46-a780-aae97cb48ffb
+		sourceColumn: Alternativa
+
+	partition Rutas = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Rutas.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"RutaID", type text}, {"Modo", type text}, {"Vía", type text}, {"Destino", type text}, {"Días previstos", Int64.Type}, {"Flete (€)", Int64.Type}, {"Km", Int64.Type}, {"Alternativa", type text}}, "en-US")
+				in
+				    Tipos
+

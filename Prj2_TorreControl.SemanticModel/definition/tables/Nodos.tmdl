@@ -1,0 +1,47 @@
+/// Puertos, aeropuertos, pasos y almacenes de la red.
+table Nodos
+	lineageTag: fc3d90c6-db7d-4f05-bca9-31bde5e8cd38
+
+	column NodoID
+		dataType: string
+		lineageTag: 5b317578-451b-42b0-a713-c3a1634f353d
+		sourceColumn: NodoID
+
+	column Nodo
+		dataType: string
+		lineageTag: 1ba6dbb3-a65d-457b-96a0-059ba4941b60
+		sourceColumn: Nodo
+
+	column País
+		dataType: string
+		lineageTag: 70442d6f-34a3-4683-916d-0213c86f4468
+		sourceColumn: País
+
+	column Tipo
+		dataType: string
+		lineageTag: 646d4d06-899e-4796-9d20-1148046cc436
+		sourceColumn: Tipo
+
+	column Lon
+		dataType: double
+		lineageTag: 2abd3e02-8a05-488c-8814-ad3eb6b00ba7
+		summarizeBy: none
+		sourceColumn: Lon
+
+	column Lat
+		dataType: double
+		lineageTag: d8329850-1311-49ce-9a8e-947ddedd29e4
+		summarizeBy: none
+		sourceColumn: Lat
+
+	partition Nodos = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Nodos.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"NodoID", type text}, {"Nodo", type text}, {"País", type text}, {"Tipo", type text}, {"Lon", type number}, {"Lat", type number}}, "en-US")
+				in
+				    Tipos
+

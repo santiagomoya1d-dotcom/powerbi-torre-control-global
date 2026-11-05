@@ -1,0 +1,23 @@
+ProveedorID,Proveedor,País,Ciudad,Lon,Lat,Categoría,Origen,Modo habitual
+PRV-01,Proveedor 01 · Ningbo,China,Ningbo,121.55,29.87,Bazar y hogar,NGB,Marítimo
+PRV-02,Proveedor 02 · Yiwu,China,Yiwu,120.07,29.31,Bazar y hogar,NGB,Marítimo
+PRV-03,Proveedor 03 · Dongguan,China,Dongguan,113.75,23.02,Temporada Navidad,YTN,Marítimo
+PRV-04,Proveedor 04 · Shantou,China,Shantou,116.68,23.35,Temporada Navidad,YTN,Marítimo
+PRV-05,Proveedor 05 · Suzhou,China,Suzhou,120.58,31.3,Higiene y belleza,SHA,Marítimo
+PRV-06,Proveedor 06 · Shanghái,China,Shanghái,121.47,31.23,Droguería,SHA,Marítimo
+PRV-07,Proveedor 07 · Seúl,Corea del Sur,Seúl,126.98,37.57,Higiene y belleza,BUS,Marítimo
+PRV-08,Proveedor 08 · Ho Chi Minh,Vietnam,Ho Chi Minh,106.66,10.76,Bazar y hogar,SGN,Marítimo
+PRV-09,Proveedor 09 · Cần Thơ,Vietnam,Cần Thơ,105.78,10.03,Alimentación,SGN,Marítimo
+PRV-10,Proveedor 10 · Bombay,India,Bombay,72.88,19.08,Alimentación,NSA,Marítimo
+PRV-11,Proveedor 11 · Chennai,India,Chennai,80.27,13.08,Higiene y belleza,NSA,Marítimo
+PRV-12,Proveedor 12 · Estambul,Turquía,Estambul,28.98,41.01,Droguería,IST,Marítimo
+PRV-13,Proveedor 13 · Bursa,Turquía,Bursa,29.06,40.19,Temporada Navidad,IST,Marítimo
+PRV-14,Proveedor 14 · São Paulo,Brasil,São Paulo,-46.63,-23.55,Alimentación,SSZ,Marítimo
+PRV-15,Proveedor 15 · Ribeirão Preto,Brasil,Ribeirão Preto,-47.81,-21.18,Bebidas,SSZ,Marítimo
+PRV-16,Proveedor 16 · Monterrey,México,Monterrey,-100.31,25.67,Bebidas,VER,Marítimo
+PRV-17,Proveedor 17 · Atlanta,Estados Unidos,Atlanta,-84.39,33.75,Mascotas,SAV,Marítimo
+PRV-18,Proveedor 18 · Milán,Italia,Milán,9.19,45.46,Higiene y belleza,MILAN,Carretera
+PRV-19,Proveedor 19 · Bolonia,Italia,Bolonia,11.34,44.49,Droguería,MILAN,Carretera
+PRV-20,Proveedor 20 · Poznań,Polonia,Poznań,16.93,52.41,Mascotas,POZNAN,Carretera
+PRV-21,Proveedor 21 · Breslavia,Polonia,Breslavia,17.04,51.11,Bebidas,POZNAN,Carretera
+PRV-22,Proveedor 22 · Tánger,Marruecos,Tánger,-5.81,35.76,Alimentación,TANGER,Carretera

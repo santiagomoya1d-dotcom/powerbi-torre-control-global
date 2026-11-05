@@ -1,0 +1,527 @@
+/// Tabla vacía que solo agrupa las medidas del informe
+table Medidas
+	lineageTag: f91c8cde-e3db-5959-84b5-0048006e16fa
+
+	/// Día que se está viendo: el que se pincha en la curva o, si no hay ninguno, el de la tabla Torre (red.config.json).
+	measure 'Fecha elegida' =
+			IF (
+			    HASONEVALUE ( Calendario[Fecha] ),
+			    VALUES ( Calendario[Fecha] ),
+			    VAR d = MAX ( Torre[Fecha por defecto] )
+			    RETURN IF ( NOT ISBLANK ( d ), d, CALCULATE ( MAX ( Calendario[Fecha] ), REMOVEFILTERS ( Calendario ) ) )
+			)
+		formatString: dd/mm/yyyy
+		displayFolder: 1 · Momento
+		lineageTag: 8921af8d-2e4b-546d-aefb-1f65ac3a1fc5
+
+	/// Mediodía del día elegido: es el instante en que se fotografía la red (posiciones, envíos en tránsito).
+	measure Momento = [Fecha elegida] + TIME ( 12, 0, 0 )
+		formatString: dd/mm/yyyy hh:nn
+		displayFolder: 1 · Momento
+		lineageTag: 371418d2-9642-5cd9-b040-84bb83477ba9
+
+	measure 'Escenario elegido' = SELECTEDVALUE ( Escenarios[Escenario], MAX ( Torre[Escenario por defecto] ) )
+		displayFolder: 1 · Momento
+		lineageTag: 3fc6222c-1410-50ab-99da-b3ec1da22d91
+
+	measure 'Título del momento' =
+			VAR d = [Fecha elegida]
+			VAR nota = SELECTEDVALUE ( Torre[Nota de la fecha] )
+			VAR pista = IF ( NOT HASONEVALUE ( Calendario[Fecha] ) && nota <> "", "  ·  " & nota )
+			RETURN FORMAT ( d, "dddd, d ""de"" mmmm ""de"" yyyy", "es-ES" ) & pista
+		displayFolder: 1 · Momento
+		lineageTag: 94e68e8b-51f1-5b60-985d-6be7b1affdf1
+
+	/// Contenedores, camiones y envíos aéreos que han salido y aún no se han entregado en el almacén.
+	measure 'Envíos en tránsito' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( COUNTROWS ( Envios ), Envios[Salida] <= t, Envios[Entrega] > t )
+		formatString: #,0
+		displayFolder: 2 · En tránsito
+		lineageTag: 174ae06e-db9c-541d-80fa-2cb6a74ef62b
+
+	measure 'Valor en tránsito (€)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Salida] <= t, Envios[Entrega] > t )
+		formatString: #,0 €
+		displayFolder: 2 · En tránsito
+		lineageTag: 8860e948-9b10-5f8e-b525-364286f2e0c6
+
+	/// En tránsito y con más de dos días de retraso sobre la entrega prevista al hacer el pedido.
+	measure 'Envíos retrasados en tránsito' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( COUNTROWS ( Envios ), Envios[Salida] <= t, Envios[Entrega] > t, Envios[Retraso (días)] > 2 )
+		formatString: #,0
+		displayFolder: 2 · En tránsito
+		lineageTag: dfce70b9-8c94-5478-ac0c-77836f0c2bf7
+
+	measure 'Valor retrasado en tránsito (€)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Salida] <= t, Envios[Entrega] > t, Envios[Retraso (días)] > 2 )
+		formatString: #,0 €
+		displayFolder: 2 · En tránsito
+		lineageTag: c000102b-7c71-53da-90ba-8df0d6068588
+
+	measure 'Buques en el mar' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( DISTINCTCOUNT ( Posiciones[ViajeID] ), Posiciones[Fecha] = d, Viajes[Modo] = "Marítimo" )
+		formatString: #,0
+		displayFolder: 2 · En tránsito
+		lineageTag: 04af60b8-0350-5d1e-b0ff-3ebf98f74a0c
+
+	measure 'Vuelos en el aire' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( DISTINCTCOUNT ( Posiciones[ViajeID] ), Posiciones[Fecha] = d, Viajes[Modo] = "Aéreo" )
+		formatString: #,0
+		displayFolder: 2 · En tránsito
+		lineageTag: 370889a7-02c3-5bf6-a9f4-83d8f5a5a031
+
+	measure 'Camiones en ruta' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( DISTINCTCOUNT ( Posiciones[ViajeID] ), Posiciones[Fecha] = d, Viajes[Modo] = "Carretera" )
+		formatString: #,0
+		displayFolder: 2 · En tránsito
+		lineageTag: 4785f98e-fa06-54e5-997e-e9551476b1ee
+
+	/// Buques que ya han llegado y esperan atraque frente al puerto.
+	measure 'Buques fondeados' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( DISTINCTCOUNT ( Posiciones[ViajeID] ), Posiciones[Fecha] = d, Posiciones[Estado] = "Fondeado" )
+		formatString: #,0
+		displayFolder: 2 · En tránsito
+		lineageTag: 6e33b409-eaf5-5053-b8cf-645594d29e41
+
+	/// Envíos entregados en el almacén en los 30 días anteriores al momento elegido.
+	measure 'Entregas (30 días)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( COUNTROWS ( Envios ), Envios[Entrega] > t - 30, Envios[Entrega] <= t )
+		formatString: #,0
+		displayFolder: 3 · Servicio
+		lineageTag: c7408197-d058-5d46-a067-6bbecf399d31
+
+	/// Entregas de los últimos 30 días con dos días de retraso o menos.
+	measure 'Puntualidad %' =
+			VAR t = [Momento]
+			RETURN DIVIDE ( CALCULATE ( COUNTROWS ( Envios ), Envios[Entrega] > t - 30, Envios[Entrega] <= t, Envios[Retraso (días)] <= 2 ), [Entregas (30 días)] )
+		formatString: 0.0%
+		displayFolder: 3 · Servicio
+		lineageTag: fb4ca589-192e-57db-889a-7f886b95b76e
+
+	measure 'Retraso medio (días)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( AVERAGEX ( Envios, MAX ( Envios[Retraso (días)], 0 ) ), Envios[Entrega] > t - 30, Envios[Entrega] <= t )
+		formatString: 0.0
+		displayFolder: 3 · Servicio
+		lineageTag: 80e84919-84a5-52d6-9cbb-a9aa431190e5
+
+	/// Días desde que la carga sale del origen hasta que entra en el almacén (entregas de los últimos 30 días).
+	measure 'Puerta a puerta (días)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( AVERAGEX ( Envios, ( Envios[Entrega] - Envios[Salida] ) * 1.0 ), Envios[Entrega] > t - 30, Envios[Entrega] <= t )
+		formatString: 0.0
+		displayFolder: 3 · Servicio
+		lineageTag: d26ab48e-0bf4-5127-8df7-46aed15c1d07
+
+	/// Flete de las cargas que salieron en los 30 días anteriores (tarifas ilustrativas).
+	measure 'Flete (30 días)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( SUM ( Envios[Flete (€)] ), Envios[Salida] > t - 30, Envios[Salida] <= t )
+		formatString: #,0 €
+		displayFolder: 3 · Servicio
+		lineageTag: 8eb3d3ee-cd1f-58ad-919a-ab9371252f35
+
+	measure 'Valor en tránsito (Base)' = CALCULATE ( [Valor en tránsito (€)], Escenarios[Escenario] = "Base" )
+		formatString: #,0 €
+		displayFolder: 4 · Frente a Base
+		lineageTag: bb549fc4-2a76-50a4-acc5-fb74654f4537
+
+	measure 'Envíos en tránsito (Base)' = CALCULATE ( [Envíos en tránsito], Escenarios[Escenario] = "Base" )
+		formatString: #,0
+		displayFolder: 4 · Frente a Base
+		lineageTag: baaf89b4-63a6-5c70-8d63-952eea17092d
+
+	measure 'Puntualidad (Base)' = CALCULATE ( [Puntualidad %], Escenarios[Escenario] = "Base" )
+		formatString: 0.0%
+		displayFolder: 4 · Frente a Base
+		lineageTag: c4c54600-e196-5bcb-a358-4b1c9ddd1598
+
+	measure 'Retraso medio (Base)' = CALCULATE ( [Retraso medio (días)], Escenarios[Escenario] = "Base" )
+		formatString: 0.0
+		displayFolder: 4 · Frente a Base
+		lineageTag: 10a9b3c9-ee14-584f-bc37-be0e605c61bc
+
+	measure 'Puerta a puerta (Base)' = CALCULATE ( [Puerta a puerta (días)], Escenarios[Escenario] = "Base" )
+		formatString: 0.0
+		displayFolder: 4 · Frente a Base
+		lineageTag: 66a00ec5-2e22-5665-92a9-bb6b7c8ebda4
+
+	measure 'Flete (Base)' = CALCULATE ( [Flete (30 días)], Escenarios[Escenario] = "Base" )
+		formatString: #,0 €
+		displayFolder: 4 · Frente a Base
+		lineageTag: e37c7a5f-cec8-5884-ad53-b2ef509e3f90
+
+	/// Longitud del viaje a mediodía del día elegido. En blanco si ese día no está en ruta: así el globo solo recibe lo que se mueve.
+	measure 'Lon hoy' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( MAX ( Posiciones[Lon] ), Posiciones[Fecha] = d )
+		formatString: 0.000
+		displayFolder: 5 · Globo
+		lineageTag: 4ec21be5-b445-5f57-b6ff-5eaf531a6920
+
+	measure 'Lat hoy' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( MAX ( Posiciones[Lat] ), Posiciones[Fecha] = d )
+		formatString: 0.000
+		displayFolder: 5 · Globo
+		lineageTag: a1f94638-55d1-5d72-8944-8fd5dcd82011
+
+	measure 'Lon siguiente hoy' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( MAX ( Posiciones[Lon siguiente] ), Posiciones[Fecha] = d )
+		formatString: 0.000
+		displayFolder: 5 · Globo
+		lineageTag: 6d508e38-43e3-5df4-8e23-5715e7f7f920
+
+	measure 'Lat siguiente hoy' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( MAX ( Posiciones[Lat siguiente] ), Posiciones[Fecha] = d )
+		formatString: 0.000
+		displayFolder: 5 · Globo
+		lineageTag: 981cc46d-d559-5bfc-85fd-ed020ab8e993
+
+	measure 'Progreso hoy' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( MAX ( Posiciones[Progreso] ), Posiciones[Fecha] = d )
+		formatString: 0.000
+		displayFolder: 5 · Globo
+		lineageTag: bab0c38c-f7a0-5814-8ad2-075ccb0e1aa9
+
+	measure 'Estado hoy' =
+			VAR d = [Fecha elegida]
+			RETURN CALCULATE ( SELECTEDVALUE ( Posiciones[Estado] ), Posiciones[Fecha] = d )
+		displayFolder: 5 · Globo
+		lineageTag: 86375b90-45a6-5ce9-90d6-521ef99a0ad2
+
+	/// Cargas del viaje que pasan los filtros de categoría y proveedor (0 = el viaje se dibuja atenuado).
+	measure 'Contenedores del viaje' = IF ( NOT ISBLANK ( [Lon hoy] ), COALESCE ( COUNTROWS ( Envios ), 0 ) )
+		formatString: #,0
+		displayFolder: 5 · Globo
+		lineageTag: e50451f3-0915-5ef6-920c-084b1898c1d2
+
+	measure 'Contenedores sin filtro' = IF ( NOT ISBLANK ( [Lon hoy] ), CALCULATE ( COUNTROWS ( Envios ), REMOVEFILTERS ( 'Categorías' ), REMOVEFILTERS ( Proveedores ) ) )
+		formatString: #,0
+		displayFolder: 5 · Globo
+		lineageTag: 1bfc81ed-f271-545a-850e-57368047db6f
+
+	measure 'Retraso del viaje' = IF ( NOT ISBLANK ( [Lon hoy] ), CALCULATE ( MAX ( Envios[Retraso (días)] ), REMOVEFILTERS ( 'Categorías' ), REMOVEFILTERS ( Proveedores ) ) )
+		formatString: 0.0
+		displayFolder: 5 · Globo
+		lineageTag: 04d2646e-15f7-5678-a0ed-95686aeaa30e
+
+	measure 'Valor del viaje (texto)' =
+			IF (
+			    NOT ISBLANK ( [Lon hoy] ),
+			    VAR v = CALCULATE ( SUM ( Envios[Valor (€)] ), REMOVEFILTERS ( 'Categorías' ), REMOVEFILTERS ( Proveedores ) )
+			    RETURN IF ( v >= 1000000, FORMAT ( v / 1000000, "0.0", "es-ES" ) & " M€", FORMAT ( v / 1000, "0", "es-ES" ) & " mil €" )
+			)
+		displayFolder: 5 · Globo
+		lineageTag: 2bcb7945-19c6-5257-9693-627eb9298eef
+
+	measure 'Categorías del viaje' =
+			IF (
+			    NOT ISBLANK ( [Lon hoy] ),
+			    CALCULATE ( CONCATENATEX ( VALUES ( Envios[Categoría] ), Envios[Categoría], ", ", Envios[Categoría], ASC ), REMOVEFILTERS ( 'Categorías' ), REMOVEFILTERS ( Proveedores ) )
+			)
+		displayFolder: 5 · Globo
+		lineageTag: 3e301f15-3f53-5199-a357-fe0ddde6b830
+
+	measure 'Llegada prevista del viaje' =
+			IF (
+			    NOT ISBLANK ( [Lon hoy] ),
+			    VAR r = [Retraso del viaje]
+			    VAR fin = CALCULATE ( MAX ( Envios[Entrega] ), REMOVEFILTERS ( 'Categorías' ), REMOVEFILTERS ( Proveedores ) )
+			    VAR plan = CALCULATE ( MIN ( Envios[Entrega prevista] ), REMOVEFILTERS ( 'Categorías' ), REMOVEFILTERS ( Proveedores ) )
+			    RETURN FORMAT ( fin, "dd/mm" ) & IF ( r > 0.5, " (plan inicial " & FORMAT ( plan, "dd/mm" ) & ")" )
+			)
+		displayFolder: 5 · Globo
+		lineageTag: bf6432e1-5df3-5cb9-9bf5-a1b3d5b600b0
+
+	/// Día elegido en texto ISO, solo en las filas en ruta (el globo calcula con él la noche).
+	measure 'Fecha del globo' = IF ( NOT ISBLANK ( [Lon hoy] ), FORMAT ( [Fecha elegida], "yyyy-mm-dd" ) )
+		displayFolder: 5 · Globo
+		lineageTag: 37312bc7-b489-5cc1-b87a-2766f9395489
+
+	measure 'Escenario del globo' = IF ( NOT ISBLANK ( [Lon hoy] ), [Escenario elegido] )
+		displayFolder: 5 · Globo
+		lineageTag: a1fb63d5-3e9e-53e7-99a4-8da47946da61
+
+	measure 'Color de categoría' = SELECTEDVALUE ( 'Categorías'[Color], "#64748B" )
+		displayFolder: 6 · Colores
+		lineageTag: 8644baa2-66ad-515c-8481-4944609b79d0
+
+	measure 'HTML · Cabecera' =
+			VAR nombre = COALESCE ( SELECTEDVALUE ( Torre[Nombre] ), "Torre de control" )
+			VAR sub = SELECTEDVALUE ( Torre[Subtítulo] )
+			VAR ficticios = SELECTEDVALUE ( Torre[Datos ficticios] ) = "Sí"
+			VAR esc = [Escenario elegido]
+			VAR esBase = esc = "Base"
+			VAR descEsc = LOOKUPVALUE ( Escenarios[Descripción], Escenarios[Escenario], esc )
+			RETURN
+			    "<style>"
+			        & ".cab{font-family:'Segoe UI',sans-serif;color:#E2E8F0;display:flex;align-items:center;justify-content:space-between;height:64px}"
+			        & ".cab .n{font-size:24px;font-weight:700;letter-spacing:-0.01em}.cab .n span{color:#64748B;font-weight:600}"
+			        & ".cab .s{font-size:14px;color:#94A3B8;margin-top:3px}.cab .s::first-letter{text-transform:uppercase}"
+			        & ".cab .pill{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.12em;border-radius:999px;padding:7px 14px;margin-left:10px;background:rgba(12,19,34,.6)}"
+			        & ".cab .esc{color:#FDA4AF;border:1px solid rgba(244,63,94,.5)}.cab .base{color:#5EEAD4;border:1px solid rgba(45,212,191,.4)}"
+			        & ".cab .fic{color:#FCD34D;border:1px solid rgba(251,191,36,.4)}"
+			        & ".cab .pto{width:8px;height:8px;border-radius:50%;animation:pulso 1.6s infinite}"
+			        & "@keyframes pulso{0%{box-shadow:0 0 0 0 var(--c)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}"
+			        & "</style>"
+			        & "<div class='cab'><div><div class='n'>" & nombre & IF ( sub <> "", " <span>· " & sub & "</span>" ) & "</div>"
+			        & "<div class='s'>" & [Título del momento] & "</div></div><div>"
+			        & "<span class='pill " & IF ( esBase, "base", "esc" ) & "' title='" & descEsc & "'><span class='pto' style='background:" & IF ( esBase, "#2DD4BF;--c:rgba(45,212,191,.7)", "#F43F5E;--c:rgba(244,63,94,.7)" ) & "'></span>"
+			        & IF ( esBase, "ESCENARIO BASE", "ESCENARIO · " & UPPER ( esc ) ) & "</span>"
+			        & IF ( ficticios, "<span class='pill fic'>DATOS FICTICIOS</span>" ) & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 772d78e9-6e36-5a76-a243-de66bfc12403
+
+	measure 'HTML · Indicadores' =
+			VAR esBase = [Escenario elegido] = "Base"
+			VAR valor = COALESCE ( [Valor en tránsito (€)], 0 )
+			VAR valorB = COALESCE ( [Valor en tránsito (Base)], 0 )
+			VAR envios = COALESCE ( [Envíos en tránsito], 0 )
+			VAR retr = COALESCE ( [Envíos retrasados en tránsito], 0 )
+			VAR valorRetr = COALESCE ( [Valor retrasado en tránsito (€)], 0 )
+			VAR pctRetr = DIVIDE ( valorRetr, valor )
+			VAR punt = [Puntualidad %]
+			VAR puntB = [Puntualidad (Base)]
+			VAR retMed = [Retraso medio (días)]
+			VAR retMedB = [Retraso medio (Base)]
+			VAR p2p = [Retraso en tránsito (días)]
+			VAR p2pB = [Retraso en tránsito (Base)]
+			VAR flete = [Flete (30 días)]
+			VAR fleteB = [Flete (Base)]
+			VAR fmtM = FORMAT ( valor / 1000000, "0.0", "es-ES" )
+			VAR dM = ( valor - valorB ) / 1000000
+			VAR dPunt = ( punt - puntB ) * 100
+			VAR dRet = retMed - retMedB
+			VAR dP2P = p2p - p2pB
+			VAR dFlete = ( flete - fleteB ) / 1000
+			VAR t = [Momento]
+			VAR vias =
+			    ADDCOLUMNS (
+			        CALCULATETABLE ( VALUES ( Envios[Vía] ), Envios[Salida] <= t, Envios[Entrega] > t ),
+			        "@v", CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Salida] <= t, Envios[Entrega] > t )
+			    )
+			VAR maxVia = MAXX ( vias, [@v] )
+			VAR viaTop = MAXX ( TOPN ( 1, vias, [@v], DESC ), Envios[Vía] )
+			VAR barra =
+			    CONCATENATEX (
+			        vias,
+			        "<i style='width:" & FORMAT ( DIVIDE ( [@v], valor ) * 100, "0.0", "en-US" ) & "%;background:"
+			            & SWITCH ( Envios[Vía], "Suez", "#38BDF8", "Cabo", "#F59E0B", "Atlántico", "#2DD4BF", "Mediterráneo", "#A78BFA", "Europa", "#94A3B8", "Aérea", "#E879F9", "#64748B" ) & "'></i>",
+			        "", [@v], DESC
+			    )
+			VAR filas =
+			    CONCATENATEX (
+			        vias,
+			        "<div class='via'><span><b style='background:"
+			            & SWITCH ( Envios[Vía], "Suez", "#38BDF8", "Cabo", "#F59E0B", "Atlántico", "#2DD4BF", "Mediterráneo", "#A78BFA", "Europa", "#94A3B8", "Aérea", "#E879F9", "#64748B" )
+			            & "'></b>" & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Europa", "Carretera (Europa)", "Aérea", "Avión", Envios[Vía] ) & "</span><span>"
+			            & FORMAT ( DIVIDE ( [@v], valor ), "0%", "es-ES" ) & " <em>" & FORMAT ( [@v] / 1000000, "0.0", "es-ES" ) & " M€</em></span></div>",
+			        "", [@v], DESC
+			    )
+			VAR esc = [Escenario elegido]
+			VAR descEsc = LOOKUPVALUE ( Escenarios[Descripción], Escenarios[Escenario], esc )
+			VAR hoy = [Fecha elegida]
+			VAR incid = CALCULATETABLE ( Incidencias, Incidencias[Desde] <= hoy, Incidencias[Hasta] >= hoy )
+			VAR proximas = CALCULATETABLE ( Incidencias, Incidencias[Desde] > hoy )
+			VAR listaInc =
+			    CONCATENATEX (
+			        incid,
+			        "<div class='inc'><b style='background:" & IF ( Incidencias[Tipo] = "Cierre", "#F43F5E", "#F59E0B" ) & "'></b><span>" & Incidencias[Incidencia]
+			            & "</span><em>" & FORMAT ( Incidencias[Desde], "d mmm", "es-ES" ) & " – " & FORMAT ( Incidencias[Hasta], "d mmm", "es-ES" ) & "</em></div>",
+			        "", Incidencias[Desde], ASC, Incidencias[Incidencia], ASC
+			    )
+			VAR nProx = COUNTROWS ( proximas )
+			VAR circ = 263.89
+			VAR resto = FORMAT ( circ * ( 1 - COALESCE ( punt, 0 ) ), "0.0", "en-US" )
+			VAR colPunt = SWITCH ( TRUE (), punt >= 0.85, "#2DD4BF", punt >= 0.6, "#F59E0B", "#F43F5E" )
+			RETURN
+			    "<style>html,body{margin:0;padding:0;overflow:hidden}"
+			        & ".kp{font-family:'Segoe UI',sans-serif;color:#E2E8F0;display:grid;gap:12px}"
+			        & ".c{position:relative;background:rgba(10,17,32,.80);border:1px solid rgba(148,163,184,.14);border-radius:18px;padding:13px 16px;overflow:hidden}.c:before{content:'';position:absolute;left:26px;right:26px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)}.et{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#64748B;display:flex;justify-content:space-between;align-items:baseline}.et em{font-style:normal;letter-spacing:.02em;text-transform:none;color:#475569;font-weight:500}.delta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px}.mal{color:#FDA4AF;background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.35)}.bien{color:#5EEAD4;background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.3)}.neutro{color:#94A3B8;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25)}"
+			        & ".big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums}.big small{font-size:17px;color:#94A3B8;font-weight:600;margin-left:4px}"
+			        & ".cuatro{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px}.cuatro div{padding-left:11px;border-left:1px solid rgba(148,163,184,.12)}.cuatro div:first-child{padding-left:0;border-left:none}"
+			        & ".cuatro b{display:block;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}.cuatro small{font-size:10.5px;color:#94A3B8}"
+			        & ".pista{height:6px;border-radius:3px;background:rgba(148,163,184,.14);margin:12px 0 6px;overflow:hidden;display:flex}.pista i{display:block;height:100%;animation:crecer 1.1s cubic-bezier(.2,.8,.2,1)}@keyframes crecer{from{width:0}}"
+			        & ".nota{font-size:12px;color:#94A3B8}.nota b{color:#FDA4AF}"
+			        & ".hero{display:flex;align-items:center;gap:16px;margin-top:6px}.aro{position:relative;width:96px;height:96px;flex:none}"
+			        & ".aro .cen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}"
+			        & ".v{animation:llenar 1.2s cubic-bezier(.2,.8,.2,1)}@keyframes llenar{from{stroke-dashoffset:263.89}}"
+			        & ".fila{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#94A3B8;margin-top:7px}.fila b{color:#E2E8F0;font-weight:600;font-variant-numeric:tabular-nums;margin-right:6px}"
+			        & ".via{display:flex;justify-content:space-between;font-size:12.5px;color:#CBD5E1;margin-top:6px}.via b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px}.via em{font-style:normal;color:#64748B;margin-left:6px}"
+			        & ".alerta{margin-top:9px;font-size:12px;color:#FCD34D;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:7px 10px}"
+			        & ".desc{margin-top:8px;font-size:12.5px;color:#CBD5E1;line-height:1.4}.inc{display:flex;align-items:center;gap:8px;font-size:12px;color:#E2E8F0;margin-top:7px}"
+			        & ".inc b{width:8px;height:8px;border-radius:50%;flex:none}.inc span{flex:1}.inc em{font-style:normal;color:#64748B}.sin{font-size:12px;color:#64748B;margin-top:7px}"
+			        & "</style><div class='kp'>"
+			        & "<div class='c'><div class='et'>En tránsito hoy<em>mediodía del día elegido</em></div>"
+			        & "<div class='big'>" & fmtM & "<small>M€</small></div>"
+			        & "<div style='margin-top:6px'>" & IF ( esBase || ISBLANK ( dM ), "", "<span class='delta " & IF ( ABS ( dM ) < 0.05, "neutro", IF ( dM > 0, "mal", "bien" ) ) & "'>" & IF ( dM > 0, "+" ) & FORMAT ( dM, "#,0.0", "es-ES" ) & " M€ vs base</span>" ) & "</div>"
+			        & "<div class='cuatro'><div><b>" & FORMAT ( COALESCE ( [Buques en el mar], 0 ), "#,0", "es-ES" ) & "</b><small>buques</small></div>"
+			        & "<div><b>" & FORMAT ( COALESCE ( [Vuelos en el aire], 0 ), "#,0", "es-ES" ) & "</b><small>vuelos</small></div>"
+			        & "<div><b>" & FORMAT ( COALESCE ( [Camiones en ruta], 0 ), "#,0", "es-ES" ) & "</b><small>camiones</small></div>"
+			        & "<div><b>" & FORMAT ( envios, "#,0", "es-ES" ) & "</b><small>cargas</small></div></div>"
+			        & "<div class='pista'><i style='width:" & FORMAT ( COALESCE ( pctRetr, 0 ) * 100, "0.0", "en-US" ) & "%;background:linear-gradient(90deg,#F59E0B,#F43F5E)'></i></div>"
+			        & "<div class='nota'><b>" & FORMAT ( retr, "#,0", "es-ES" ) & " cargas retrasadas</b> · " & FORMAT ( valorRetr / 1000000, "0.0", "es-ES" ) & " M€ ("
+			        & FORMAT ( COALESCE ( pctRetr, 0 ), "0%", "es-ES" ) & " del valor en tránsito)</div></div>"
+			        & "<div class='c'><div class='et'>Servicio<em>entregas de los últimos 30 días</em></div><div class='hero'>"
+			        & "<div class='aro'><svg viewBox='0 0 96 96' width='96' height='96'><circle cx='48' cy='48' r='42' fill='none' stroke='rgba(148,163,184,.14)' stroke-width='8'/>"
+			        & "<circle class='v' cx='48' cy='48' r='42' fill='none' stroke='" & colPunt & "' stroke-width='8' stroke-linecap='round' stroke-dasharray='263.89' stroke-dashoffset='" & resto & "' transform='rotate(-90 48 48)'/></svg>"
+			        & "<div class='cen' style='color:" & colPunt & "'>" & FORMAT ( COALESCE ( punt, 0 ), "0%", "es-ES" ) & "</div></div>"
+			        & "<div style='flex:1'><div class='fila'>Puntualidad<span>" & IF ( esBase || ISBLANK ( dPunt ), "", "<span class='delta " & IF ( ABS ( dPunt ) < 0.05, "neutro", IF ( dPunt < 0, "mal", "bien" ) ) & "'>" & IF ( dPunt > 0, "+" ) & FORMAT ( dPunt, "#,0", "es-ES" ) & " pp vs base</span>" ) & "</span></div>"
+			        & "<div class='fila'>Retraso medio<span><b>" & FORMAT ( retMed, "0.0", "es-ES" ) & " d</b>" & IF ( esBase || ISBLANK ( dRet ), "", "<span class='delta " & IF ( ABS ( dRet ) < 0.05, "neutro", IF ( dRet > 0, "mal", "bien" ) ) & "'>" & IF ( dRet > 0, "+" ) & FORMAT ( dRet, "#,0.0", "es-ES" ) & " d vs base</span>" ) & "</span></div>"
+			        & "<div class='fila'>En tránsito<span><b>" & FORMAT ( p2p, "0.0", "es-ES" ) & " d</b>" & IF ( esBase || ISBLANK ( dP2P ), "", "<span class='delta " & IF ( ABS ( dP2P ) < 0.05, "neutro", IF ( dP2P > 0, "mal", "bien" ) ) & "'>" & IF ( dP2P > 0, "+" ) & FORMAT ( dP2P, "#,0.0", "es-ES" ) & " d vs base</span>" ) & "</span></div>"
+			        & "</div></div></div>"
+			        & "<div class='c'><div class='et'>Exposición por vía<em>valor en tránsito</em></div>"
+			        & "<div class='pista' style='height:10px;border-radius:5px'>" & barra & "</div>" & filas
+			        & IF ( DIVIDE ( maxVia, valor ) >= 0.5, "<div class='alerta'>El " & FORMAT ( DIVIDE ( maxVia, valor ), "0%", "es-ES" ) & " del valor en tránsito depende de una sola vía: "
+			            & SWITCH ( viaTop, "Cabo", "el Cabo de Buena Esperanza", "Europa", "la carretera europea", "Aérea", "el avión", viaTop ) & ".</div>" )
+			        & "</div>"
+			        & "<div class='c'><div class='et'>Flete<em>cargas que salieron en los últimos 30 días</em></div>"
+			        & "<div class='fila' style='margin-top:9px'><span style='font-size:22px;font-weight:700;color:#E2E8F0'>" & FORMAT ( flete / 1000, "#,0", "es-ES" ) & " mil €</span>"
+			        & IF ( esBase || ISBLANK ( dFlete ), "", "<span class='delta " & IF ( ABS ( dFlete ) < 0.05, "neutro", IF ( dFlete > 0, "mal", "bien" ) ) & "'>" & IF ( dFlete > 0, "+" ) & FORMAT ( dFlete, "#,0", "es-ES" ) & " mil € vs base</span>" ) & "</div></div>"
+			        & "<div class='c'><div class='et'>Qué está pasando<em>" & IF ( esBase, "escenario base", "escenario simulado" ) & "</em></div>"
+			        & "<div class='desc'>" & descEsc & "</div>"
+			        & IF ( ISEMPTY ( incid ), "<div class='sin'>Ninguna incidencia activa este día" & IF ( nProx > 0, " · " & nProx & " más adelante", "" ) & ".</div>", listaInc )
+			        & "</div>"
+			        & "</div>"
+		displayFolder: 7 · HTML
+		lineageTag: 33e4d027-b65b-52c2-9fab-a8346aedf43d
+
+	measure 'HTML · Alertas' =
+			VAR t = [Momento]
+			VAR enTransito =
+			    FILTER (
+			        ADDCOLUMNS (
+			            CALCULATETABLE ( Envios, Envios[Salida] <= t, Envios[Entrega] > t ),
+			            "@cob", RELATED ( 'Categorías'[Cobertura (días)] ),
+			            "@prov", RELATED ( Proveedores[Proveedor] ),
+			            "@viaje", RELATED ( Viajes[Viaje] ),
+			            "@color", RELATED ( 'Categorías'[Color] )
+			        ),
+			        Envios[Retraso (días)] > 2
+			    )
+			VAR riesgo = FILTER ( enTransito, Envios[Retraso (días)] > [@cob] )
+			VAR nRiesgo = COUNTROWS ( riesgo )
+			VAR vRiesgo = SUMX ( riesgo, Envios[Valor (€)] )
+			VAR lista =
+			    CONCATENATEX (
+			        TOPN ( 6, enTransito, Envios[Retraso (días)] - [@cob], DESC, Envios[Valor (€)], DESC ),
+			        VAR rot = Envios[Retraso (días)] > [@cob]
+			        RETURN
+			            "<div class='al'><b class='pt' style='background:" & [@color] & "'></b><div class='tx'><div class='t1'>" & [@prov] & "</div>"
+			                & "<div class='t2'>" & Envios[Categoría] & " · " & [@viaje] & "</div></div>"
+			                & "<div class='dr'><span class='dias " & IF ( rot, "rot", "ret" ) & "'>+" & FORMAT ( Envios[Retraso (días)], "0", "es-ES" ) & " d</span>"
+			                & "<div class='t2'>" & IF ( rot, "cubre " & [@cob] & " d · rotura", "cubre " & [@cob] & " d" ) & "</div></div></div>",
+			        "", Envios[Retraso (días)] - [@cob], DESC, Envios[Valor (€)], DESC
+			    )
+			RETURN
+			    "<style>html,body{margin:0;padding:0;overflow:hidden}"
+			        & ".al-w{font-family:'Segoe UI',sans-serif;color:#E2E8F0}.c{position:relative;background:rgba(10,17,32,.80);border:1px solid rgba(148,163,184,.14);border-radius:18px;padding:13px 16px;overflow:hidden}.c:before{content:'';position:absolute;left:26px;right:26px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)}.et{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#64748B;display:flex;justify-content:space-between;align-items:baseline}.et em{font-style:normal;letter-spacing:.02em;text-transform:none;color:#475569;font-weight:500}.delta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px}.mal{color:#FDA4AF;background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.35)}.bien{color:#5EEAD4;background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.3)}.neutro{color:#94A3B8;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25)}"
+			        & ".res{display:flex;gap:10px;margin:10px 0 4px}.res div{flex:1;border-radius:12px;padding:8px 10px;background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.25)}"
+			        & ".res b{display:block;font-size:20px;color:#FDA4AF;font-variant-numeric:tabular-nums}.res small{font-size:11px;color:#94A3B8}"
+			        & ".al{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(148,163,184,.1)}.al:first-of-type{border-top:none}"
+			        & ".pt{width:9px;height:9px;border-radius:50%;flex:none}.tx{flex:1;min-width:0}.t1{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+			        & ".t2{font-size:11px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dr{text-align:right;flex:none}"
+			        & ".dias{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px}.rot{color:#FFF1F2;background:#F43F5E}.ret{color:#FCD34D;background:rgba(245,158,11,.16)}"
+			        & ".ok{font-size:12.5px;color:#5EEAD4;margin-top:10px}"
+			        & "</style><div class='al-w'><div class='c'><div class='et'>Riesgo de rotura en el almacén<em>retraso frente a días de cobertura</em></div>"
+			        & IF (
+			            COUNTROWS ( enTransito ) = 0,
+			            "<div class='ok'>Ninguna carga en tránsito va con más de dos días de retraso.</div>",
+			            "<div class='res'><div><b>" & COALESCE ( nRiesgo, 0 ) & "</b><small>cargas llegarán cuando ya no quede stock</small></div>"
+			                & "<div><b>" & FORMAT ( COALESCE ( vRiesgo, 0 ) / 1000000, "0.0", "es-ES" ) & " M€</b><small>valor de esas cargas</small></div></div>" & lista
+			        )
+			        & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: eb93f711-6376-5c17-9f9c-a00539b02813
+
+	measure 'HTML · Llegadas' =
+			VAR t = [Momento]
+			VAR dias =
+			    ADDCOLUMNS (
+			        GENERATESERIES ( 0, 13, 1 ),
+			        "@ini", INT ( t ) + [Value],
+			        "@v", VAR a = INT ( t ) + [Value] RETURN COALESCE ( CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Entrega] >= a, Envios[Entrega] < a + 1 ), 0 ),
+			        "@r", VAR a = INT ( t ) + [Value] RETURN COALESCE ( CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Entrega] >= a, Envios[Entrega] < a + 1, Envios[Retraso (días)] > 2 ), 0 )
+			    )
+			VAR maxV = MAX ( MAXX ( dias, [@v] ), 1 )
+			VAR total = SUMX ( dias, [@v] )
+			VAR n = CALCULATE ( COUNTROWS ( Envios ), Envios[Entrega] >= INT ( t ), Envios[Entrega] < INT ( t ) + 14 )
+			VAR barras =
+			    CONCATENATEX (
+			        dias,
+			        VAR h = DIVIDE ( [@v], maxV ) * 92
+			        VAR hr = DIVIDE ( [@r], maxV ) * 92
+			        VAR x = [Value] * 27 + 4
+			        RETURN
+			            "<rect x='" & x & "' y='" & FORMAT ( 100 - h, "0.0", "en-US" ) & "' width='19' height='" & FORMAT ( h, "0.0", "en-US" ) & "' rx='4' fill='url(#gL)'/>"
+			                & IF ( hr > 0, "<rect x='" & x & "' y='" & FORMAT ( 100 - hr, "0.0", "en-US" ) & "' width='19' height='" & FORMAT ( hr, "0.0", "en-US" ) & "' rx='4' fill='#F59E0B' fill-opacity='.85'/>" )
+			                & "<text x='" & FORMAT ( x + 9.5, "0.0", "en-US" ) & "' y='114' fill='" & IF ( WEEKDAY ( [@ini], 2 ) >= 6, "#334155", "#64748B" ) & "' font-size='9.5' text-anchor='middle'>" & DAY ( [@ini] ) & "</text>",
+			        "", [Value], ASC
+			    )
+			RETURN
+			    "<style>html,body{margin:0;padding:0;overflow:hidden}"
+			        & ".ll{font-family:'Segoe UI',sans-serif;color:#E2E8F0}"
+			        & ".c{position:relative;background:rgba(10,17,32,.80);border:1px solid rgba(148,163,184,.14);border-radius:18px;padding:13px 16px;overflow:hidden}"
+			        & ".et{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#64748B;display:flex;justify-content:space-between;align-items:baseline}"
+			        & ".et em{font-style:normal;letter-spacing:.02em;text-transform:none;color:#475569;font-weight:500}"
+			        & ".tot{font-size:13px;color:#94A3B8;margin-top:6px}.tot b{color:#E2E8F0;font-size:18px;margin-right:4px}"
+			        & ".leg{font-size:11px;color:#64748B;margin-top:2px}.leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 5px 0 10px;vertical-align:-1px}"
+			        & "svg rect{animation:subir .9s cubic-bezier(.2,.8,.2,1)}@keyframes subir{from{transform:scaleY(0)}}svg rect{transform-origin:0 100px}"
+			        & "</style><div class='ll'><div class='c'><div class='et'>Llegadas al almacén<em>próximos 14 días</em></div>"
+			        & "<div class='tot'><b>" & FORMAT ( COALESCE ( total, 0 ) / 1000000, "0.0", "es-ES" ) & " M€</b> en " & FORMAT ( COALESCE ( n, 0 ), "#,0", "es-ES" ) & " cargas"
+			        & "<span class='leg'><i style='background:#2DD4BF'></i>a tiempo<i style='background:#F59E0B'></i>con retraso</span></div>"
+			        & "<svg viewBox='0 0 380 118' width='100%' height='118' style='display:block;margin-top:6px'><defs><linearGradient id='gL' x1='0' y1='0' x2='0' y2='1'>"
+			        & "<stop offset='0' stop-color='#5EEAD4'/><stop offset='1' stop-color='#0F766E'/></linearGradient></defs>" & barras & "</svg></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 11acd114-e264-59ed-87d7-7188d62c5602
+
+	measure 'HTML · Leyenda' =
+			VAR it = "<span class='i'><i class='c' style='background:"
+			RETURN
+			    "<style>html,body{margin:0;padding:0;overflow:hidden}.ley{font-family:'Segoe UI',sans-serif;color:#94A3B8;font-size:11.5px;display:flex;flex-wrap:nowrap;gap:6px 14px;align-items:center;justify-content:center;height:100%;white-space:nowrap}"
+			        & ".ley .i{display:inline-flex;align-items:center}.ley .c{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.ley .l{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:6px}"
+			        & ".ley .sep{width:1px;height:14px;background:rgba(148,163,184,.3)}</style>"
+			        & "<div class='ley'>" & it & "#F8FAFC'></i>En plazo</span>" & it & "#FBBF24'></i>3 a 7 días tarde</span>" & it & "#FB7185'></i>Más de 7 días tarde</span>"
+			        & "<span class='sep'></span>"
+			        & "<span class='i'><i class='l' style='background:#38BDF8'></i>Suez</span><span class='i'><i class='l' style='background:#F59E0B'></i>Cabo</span>"
+			        & "<span class='i'><i class='l' style='background:#2DD4BF'></i>Atlántico</span><span class='i'><i class='l' style='background:#A78BFA'></i>Mediterráneo</span>"
+			        & "<span class='i'><i class='l' style='background:#94A3B8'></i>Carretera</span><span class='i'><i class='l' style='background:#E879F9'></i>Avión</span></div>"
+		displayFolder: 7 · HTML
+		lineageTag: be18016d-824f-571e-817e-b9bd7bb6cd37
+
+	/// Retraso medio previsto de lo que está ahora en tránsito: anticipa lo que aún no ha llegado.
+	measure 'Retraso en tránsito (días)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( AVERAGEX ( Envios, MAX ( Envios[Retraso (días)], 0 ) ), Envios[Salida] <= t, Envios[Entrega] > t )
+		formatString: 0.0
+		displayFolder: 2 · En tránsito
+		lineageTag: 8871b92c-9f50-5c11-9db4-0be1d8b08651
+
+	measure 'Retraso en tránsito (Base)' = CALCULATE ( [Retraso en tránsito (días)], Escenarios[Escenario] = "Base" )
+		formatString: 0.0
+		displayFolder: 4 · Frente a Base
+		lineageTag: 00601202-e64e-5191-9cc5-6bb396189a08
+
+	column Oculta
+		isHidden
+		lineageTag: 45fe9b41-064b-5c05-a107-c3e78124858a
+		isNameInferred
+		sourceColumn: [Oculta]
+
+	partition Medidas = calculated
+		mode: import
+		source = ROW("Oculta", BLANK())
+

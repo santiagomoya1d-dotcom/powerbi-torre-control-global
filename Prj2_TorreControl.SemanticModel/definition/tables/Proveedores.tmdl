@@ -1,0 +1,63 @@
+/// Proveedores ficticios, con su ciudad, categoría y punto de salida.
+table Proveedores
+	lineageTag: 8999778f-db73-42b2-9e07-993a34ef7596
+
+	column ProveedorID
+		dataType: string
+		isHidden
+		lineageTag: ca6f6d99-8992-49ee-9132-357e9a932086
+		sourceColumn: ProveedorID
+
+	column Proveedor
+		dataType: string
+		lineageTag: 0d0e2159-a785-4fed-83ab-342ab0ba6ad1
+		sourceColumn: Proveedor
+
+	column País
+		dataType: string
+		lineageTag: c594f471-2ced-48d2-85a5-2fdc456f2f5f
+		sourceColumn: País
+
+	column Ciudad
+		dataType: string
+		lineageTag: 302078aa-bf16-4531-955e-cebd3ec4dbb5
+		sourceColumn: Ciudad
+
+	column Lon
+		dataType: double
+		lineageTag: a4e8d3d0-bb15-412a-a526-2a4664d4314d
+		summarizeBy: none
+		sourceColumn: Lon
+
+	column Lat
+		dataType: double
+		lineageTag: f547e9e1-e8f9-4816-9c2b-3431d172e86c
+		summarizeBy: none
+		sourceColumn: Lat
+
+	column Categoría
+		dataType: string
+		lineageTag: c646586e-e200-4765-b872-bf41b67eaf9c
+		sourceColumn: Categoría
+
+	column Origen
+		dataType: string
+		lineageTag: f33f4a94-0c10-4be7-b1ef-5029ec7218d1
+		sourceColumn: Origen
+
+	column 'Modo habitual'
+		dataType: string
+		lineageTag: 0dd14135-0228-49ae-9f4a-c4fb4722b3b1
+		sourceColumn: Modo habitual
+
+	partition Proveedores = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Proveedores.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"ProveedorID", type text}, {"Proveedor", type text}, {"País", type text}, {"Ciudad", type text}, {"Lon", type number}, {"Lat", type number}, {"Categoría", type text}, {"Origen", type text}, {"Modo habitual", type text}}, "en-US")
+				in
+				    Tipos
+

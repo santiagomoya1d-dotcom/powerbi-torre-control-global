@@ -1,0 +1,98 @@
+/// Salidas de buque, vuelos y camiones: los envíos de un viaje viajan juntos.
+table Viajes
+	lineageTag: b2939d34-5674-4904-a360-f1be341842ce
+
+	column ViajeID
+		dataType: string
+		lineageTag: b51632c0-ed9e-442a-8199-bd30cf928a43
+		sourceColumn: ViajeID
+
+	column Escenario
+		dataType: string
+		isHidden
+		lineageTag: 81140c68-b414-41b2-8623-c4aad86daabb
+		sourceColumn: Escenario
+
+	column Modo
+		dataType: string
+		isHidden
+		lineageTag: b81934ef-6bf9-44e5-8f95-d8e9b0cc13b7
+		sourceColumn: Modo
+
+	column RutaID
+		dataType: string
+		isHidden
+		lineageTag: 8380724a-1ca9-47ca-8b90-591e5941cfe0
+		sourceColumn: RutaID
+
+	column Vía
+		dataType: string
+		lineageTag: d650915a-a691-4d1f-a396-4792ae10b41f
+		sourceColumn: Vía
+
+	column Origen
+		dataType: string
+		lineageTag: 7f899f02-235b-4258-aa91-a39c698c2e65
+		sourceColumn: Origen
+
+	column Destino
+		dataType: string
+		lineageTag: 8dd1d4df-5a5d-4666-9be1-f0e43bf0499e
+		sourceColumn: Destino
+
+	column Viaje
+		dataType: string
+		lineageTag: 6cddb979-0dd6-4e9e-9891-d89a047c1a9d
+		sourceColumn: Viaje
+
+	column 'Origen nombre'
+		dataType: string
+		lineageTag: 16f111b0-38ba-4e73-8f11-86f7b27fc379
+		sourceColumn: Origen nombre
+
+	column 'Destino nombre'
+		dataType: string
+		lineageTag: 90e21dbe-9bd1-45a7-86f4-d147ca854b68
+		sourceColumn: Destino nombre
+
+	column Salida
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 582e423c-c92e-4fc9-9b24-6af86372f96c
+		sourceColumn: Salida
+
+	column Llegada
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 5879acb7-1ff9-4314-8af9-11972f4a5efb
+		sourceColumn: Llegada
+
+	column 'Fin de espera'
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: ee088505-1814-4b7c-ba6a-87aad68ed229
+		sourceColumn: Fin de espera
+
+	column 'Días de tránsito'
+		dataType: double
+		lineageTag: 7eedf77b-f1a9-4fe5-825e-6a79ee291377
+		summarizeBy: none
+		sourceColumn: Días de tránsito
+
+	column 'Días de espera'
+		dataType: double
+		lineageTag: 9ceeda05-f38f-4840-89de-876f67d66d3c
+		summarizeBy: none
+		sourceColumn: Días de espera
+
+	partition Viajes = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Viajes.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"ViajeID", type text}, {"Escenario", type text}, {"Modo", type text}, {"RutaID", type text}, {"Vía", type text}, {"Origen", type text}, {"Destino", type text}, {"Viaje", type text}, {"Origen nombre", type text}, {"Destino nombre", type text}, {"Salida", type datetime}, {"Llegada", type datetime}, {"Fin de espera", type datetime}, {"Días de tránsito", type number}, {"Días de espera", type number}}, "en-US")
+				in
+				    Tipos
+

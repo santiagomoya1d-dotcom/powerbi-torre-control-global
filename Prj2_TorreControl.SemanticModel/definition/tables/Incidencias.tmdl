@@ -1,0 +1,61 @@
+/// Cierres de pasos y congestión de puertos de cada escenario.
+table Incidencias
+	lineageTag: c96205de-0ce8-42a7-8c50-f36d25f32aa4
+
+	column Escenario
+		dataType: string
+		isHidden
+		lineageTag: d6c90e41-966d-4146-9bb8-9c06904885f3
+		sourceColumn: Escenario
+
+	column Incidencia
+		dataType: string
+		lineageTag: 6076c150-79e8-4d11-82e3-efab6a39dc10
+		sourceColumn: Incidencia
+
+	column Tipo
+		dataType: string
+		lineageTag: 2f5c6226-de0a-43ca-8b3b-c5678cdb7685
+		sourceColumn: Tipo
+
+	column Desde
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: de6083fe-941a-4dd9-97e6-97676c8ea074
+		sourceColumn: Desde
+
+	column Hasta
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: f693f89e-5a00-4085-9bc0-5048da4855e5
+		sourceColumn: Hasta
+
+	column Lon
+		dataType: double
+		lineageTag: a0a706c1-a38d-4f08-847e-f62c3eee88c9
+		summarizeBy: none
+		sourceColumn: Lon
+
+	column Lat
+		dataType: double
+		lineageTag: 202a0dee-9a3b-420d-ada8-94c6515872b0
+		summarizeBy: none
+		sourceColumn: Lat
+
+	column 'Radio (km)'
+		dataType: int64
+		lineageTag: 66e914ac-7c06-4dbd-bb3c-c874f65b75e9
+		summarizeBy: none
+		sourceColumn: Radio (km)
+
+	partition Incidencias = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Incidencias.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"Escenario", type text}, {"Incidencia", type text}, {"Tipo", type text}, {"Desde", type date}, {"Hasta", type date}, {"Lon", type number}, {"Lat", type number}, {"Radio (km)", Int64.Type}}, "en-US")
+				in
+				    Tipos
+

@@ -1,0 +1,5 @@
+Escenario,Incidencia,Tipo,Desde,Hasta,Lon,Lat,Radio (km)
+Cierre de Suez,Cierre · Canal de Suez,Cierre,2026-02-09,2026-03-22,32.55,30.6,450
+Cierre de Suez,Congestión · puerto de Algeciras,Congestión,2026-03-10,2026-04-30,-5.43,36.13,120
+Cierre de Suez,Congestión · puerto de Barcelona,Congestión,2026-03-10,2026-04-30,2.17,41.35,120
+Cierre de Suez,Congestión · puerto de Valencia,Congestión,2026-03-10,2026-04-30,-0.32,39.44,120

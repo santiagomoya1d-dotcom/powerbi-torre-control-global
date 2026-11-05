@@ -1,0 +1,33 @@
+/// Escenarios simulados: Base y las incidencias de red.config.json.
+table Escenarios
+	lineageTag: 1a60292d-1dec-4a5a-839c-4c687a524bcd
+
+	column Escenario
+		dataType: string
+		lineageTag: 461d6c8b-2da1-4d6f-813f-aee6391a3f4e
+		sourceColumn: Escenario
+		sortByColumn: Orden
+
+	column Orden
+		dataType: int64
+		isHidden
+		lineageTag: 37fff9ea-f798-4d23-8000-6b33873ea466
+		summarizeBy: none
+		sourceColumn: Orden
+
+	column Descripción
+		dataType: string
+		lineageTag: 53ea8172-6e3b-4415-bbd6-60af194b1de8
+		sourceColumn: Descripción
+
+	partition Escenarios = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Escenarios.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"Escenario", type text}, {"Orden", Int64.Type}, {"Descripción", type text}}, "en-US")
+				in
+				    Tipos
+

@@ -1,0 +1,70 @@
+/// Días del periodo. No está relacionada: el día que se elige en la curva decide la fecha de toda la página.
+table Calendario
+	lineageTag: 237bd1f4-b7f9-4b33-a4e6-65eb1be69550
+
+	column Fecha
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: d3c7d68b-815c-4799-8d05-3b40fe183092
+		sourceColumn: Fecha
+
+	column Año
+		dataType: int64
+		lineageTag: cd501476-57cc-4670-bc18-1c2a2f55da70
+		summarizeBy: none
+		sourceColumn: Año
+
+	column Mes
+		dataType: int64
+		isHidden
+		lineageTag: 7c1d9f3e-76eb-48ee-912c-f77594c57ae2
+		summarizeBy: none
+		sourceColumn: Mes
+
+	column 'Nombre del mes'
+		dataType: string
+		lineageTag: 7aeb3ac6-583d-4c3a-925e-bedf4e9fd3c6
+		sourceColumn: Nombre del mes
+		sortByColumn: Mes
+
+	column 'Mes corto'
+		dataType: string
+		lineageTag: 895ebeed-97ea-4ac6-b28f-919660605e22
+		sourceColumn: Mes corto
+		sortByColumn: Mes
+
+	column Año-mes
+		dataType: int64
+		isHidden
+		lineageTag: 261d4659-2465-43c6-9298-0544a491f942
+		summarizeBy: none
+		sourceColumn: Año-mes
+
+	column 'Mes y año'
+		dataType: string
+		lineageTag: c578f174-b3ad-4a7c-a63b-29c0befbda20
+		sourceColumn: Mes y año
+		sortByColumn: Año-mes
+
+	column 'Semana ISO'
+		dataType: int64
+		lineageTag: 49d33fb2-832a-4407-81f9-79e5223e3869
+		summarizeBy: none
+		sourceColumn: Semana ISO
+
+	column 'Día de la semana'
+		dataType: string
+		lineageTag: 0f1e3da8-7f55-4c15-b3d4-256ae2301576
+		sourceColumn: Día de la semana
+
+	partition Calendario = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Calendario.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"Fecha", type date}, {"Año", Int64.Type}, {"Mes", Int64.Type}, {"Nombre del mes", type text}, {"Mes corto", type text}, {"Año-mes", Int64.Type}, {"Mes y año", type text}, {"Semana ISO", Int64.Type}, {"Día de la semana", type text}}, "en-US")
+				in
+				    Tipos
+

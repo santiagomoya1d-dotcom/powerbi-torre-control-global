@@ -1,0 +1,46 @@
+/// Datos de la página: nombre, día y escenario que se abren por defecto. Una sola fila.
+table Torre
+	lineageTag: f569ce61-e2b0-4dc1-8d19-7c1c891c99d7
+
+	column Nombre
+		dataType: string
+		lineageTag: a1395fbe-500d-49af-964d-c53cfd09dd90
+		sourceColumn: Nombre
+
+	column Subtítulo
+		dataType: string
+		lineageTag: 0bd74bcc-20c1-4e6f-9ee2-e06ff19c1e05
+		sourceColumn: Subtítulo
+
+	column 'Datos ficticios'
+		dataType: string
+		lineageTag: 9b92ee76-2e31-4031-97da-dd17b409f36e
+		sourceColumn: Datos ficticios
+
+	column 'Fecha por defecto'
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 85221767-3d2d-4768-af93-23176d092beb
+		sourceColumn: Fecha por defecto
+
+	column 'Escenario por defecto'
+		dataType: string
+		lineageTag: c0bb8f89-6985-473c-9ded-210fd733ce51
+		sourceColumn: Escenario por defecto
+
+	column 'Nota de la fecha'
+		dataType: string
+		lineageTag: cb1a5764-3071-4242-bbbe-b764459d9be5
+		sourceColumn: Nota de la fecha
+
+	partition Torre = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Torre.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"Nombre", type text}, {"Subtítulo", type text}, {"Datos ficticios", type text}, {"Fecha por defecto", type date}, {"Escenario por defecto", type text}, {"Nota de la fecha", type text}}, "en-US")
+				in
+				    Tipos
+

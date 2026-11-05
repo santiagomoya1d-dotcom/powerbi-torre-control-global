@@ -1,0 +1,57 @@
+/// Categorías del almacén, con colores y días de cobertura del stock de seguridad.
+table Categorías
+	lineageTag: a09f942c-c2ab-4c30-b769-f7c6b2016901
+
+	column Categoría
+		dataType: string
+		lineageTag: 03a5bff9-93d9-4f50-a2fd-29a8f190538b
+		sourceColumn: Categoría
+		sortByColumn: Orden
+
+	column 'Nombre corto'
+		dataType: string
+		lineageTag: d74bedea-69e1-4c6c-8321-3fec09cbbc90
+		sourceColumn: Nombre corto
+
+	column Color
+		dataType: string
+		isHidden
+		lineageTag: 30ea3607-75df-4bb4-a0d4-14448b93167a
+		sourceColumn: Color
+
+	column 'Tono claro'
+		dataType: string
+		isHidden
+		lineageTag: b349f7b5-a976-4c28-bcea-85d3b962d6cf
+		sourceColumn: Tono claro
+
+	column 'Tono oscuro'
+		dataType: string
+		isHidden
+		lineageTag: 2646a052-b008-43bd-b51f-a421430cb51f
+		sourceColumn: Tono oscuro
+
+	column Orden
+		dataType: int64
+		isHidden
+		lineageTag: 298c53d2-ab34-401a-8615-8d9dc43cc50f
+		summarizeBy: none
+		sourceColumn: Orden
+
+	column 'Cobertura (días)'
+		dataType: int64
+		lineageTag: 4a907600-b315-4a17-a87b-abd41f5b9a72
+		summarizeBy: none
+		sourceColumn: Cobertura (días)
+
+	partition Categorías = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Categorias.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"Categoría", type text}, {"Nombre corto", type text}, {"Color", type text}, {"Tono claro", type text}, {"Tono oscuro", type text}, {"Orden", Int64.Type}, {"Cobertura (días)", Int64.Type}}, "en-US")
+				in
+				    Tipos
+

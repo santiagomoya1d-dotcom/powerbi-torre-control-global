@@ -1,0 +1,28 @@
+/// Modos de transporte.
+table Modos
+	lineageTag: ceb4f74c-a624-4ab5-903d-e6804f9e6279
+
+	column Modo
+		dataType: string
+		lineageTag: 89f7c5d8-abb1-4024-b0d3-d1af2472bc66
+		sourceColumn: Modo
+		sortByColumn: Orden
+
+	column Orden
+		dataType: int64
+		isHidden
+		lineageTag: bb3977ef-a832-41bc-b44b-610dfb0a273f
+		summarizeBy: none
+		sourceColumn: Orden
+
+	partition Modos = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Modos.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"Modo", type text}, {"Orden", Int64.Type}}, "en-US")
+				in
+				    Tipos
+

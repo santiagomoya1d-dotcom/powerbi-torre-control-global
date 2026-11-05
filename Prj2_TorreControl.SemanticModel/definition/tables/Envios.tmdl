@@ -1,0 +1,135 @@
+/// Contenedores, camiones y envíos aéreos: un registro por carga y escenario, con su viaje, fechas, retraso, valor y flete.
+table Envios
+	lineageTag: 890d7fee-6b9c-477a-ab87-6e0a0e5702c0
+
+	column EnvioID
+		dataType: string
+		lineageTag: 3e11d8d1-9095-46f8-9c08-fabab6b9e0d2
+		sourceColumn: EnvioID
+
+	column Escenario
+		dataType: string
+		isHidden
+		lineageTag: 12d0b996-60a0-4fd5-be57-8446221170fd
+		sourceColumn: Escenario
+
+	column ViajeID
+		dataType: string
+		isHidden
+		lineageTag: a17837a1-9356-4014-af52-312a2dbf607d
+		sourceColumn: ViajeID
+
+	column ProveedorID
+		dataType: string
+		isHidden
+		lineageTag: 26022b4e-0ccd-49ad-8ed3-ea6879d0415c
+		sourceColumn: ProveedorID
+
+	column Categoría
+		dataType: string
+		isHidden
+		lineageTag: fa6a2981-0bc4-4b99-8d78-c332e71d3510
+		sourceColumn: Categoría
+
+	column Modo
+		dataType: string
+		lineageTag: 0b41f86d-40f9-4773-89c3-c83ad34f9ad2
+		sourceColumn: Modo
+
+	column Vía
+		dataType: string
+		lineageTag: e0969d5c-53bd-48ca-bcdd-315c0b02baa8
+		sourceColumn: Vía
+
+	column RutaID
+		dataType: string
+		isHidden
+		lineageTag: b2b2a9a8-9f4a-4849-965d-cd947816a7c7
+		sourceColumn: RutaID
+
+	column Origen
+		dataType: string
+		lineageTag: 6d75d045-085f-42f0-93bb-c0e076bd3c94
+		sourceColumn: Origen
+
+	column Destino
+		dataType: string
+		lineageTag: e1c9a50e-89e8-486b-8f4c-aff7dba21188
+		sourceColumn: Destino
+
+	column PO
+		dataType: string
+		lineageTag: 157f1bd6-2258-4d78-a7d6-7fdebbafbcc9
+		sourceColumn: PO
+
+	column 'Fecha pedido'
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: f78663e9-8128-48e7-a11d-3a06456138a9
+		sourceColumn: Fecha pedido
+
+	column 'Listo en origen'
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 6670f8ae-bea3-4fc2-80c3-821cffa9129f
+		sourceColumn: Listo en origen
+
+	column Salida
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 1bb48e13-625a-4603-8ed8-aa06aa79e009
+		sourceColumn: Salida
+
+	column Llegada
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 8a65367d-b1be-4c92-a179-24165da13342
+		sourceColumn: Llegada
+
+	column Entrega
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 6b537368-f705-4748-9d96-c60924bc7d85
+		sourceColumn: Entrega
+
+	column 'Entrega prevista'
+		dataType: dateTime
+		formatString: dd/mm/yyyy hh:nn
+		lineageTag: 492b2b48-13c3-4a36-a7e1-813047c8ff31
+		sourceColumn: Entrega prevista
+
+	column 'Retraso (días)'
+		dataType: double
+		lineageTag: 5721a0a9-951e-4c20-9a7d-d8eb8bc01e0a
+		summarizeBy: none
+		sourceColumn: Retraso (días)
+
+	column 'Valor (€)'
+		dataType: int64
+		lineageTag: 204d4b20-c355-4406-9057-c2ab9a8d3bf4
+		summarizeBy: none
+		sourceColumn: Valor (€)
+
+	column 'Flete (€)'
+		dataType: int64
+		lineageTag: bcdc06b2-b1d8-41e6-9c0e-ff50dcd14909
+		summarizeBy: none
+		sourceColumn: Flete (€)
+
+	column Palets
+		dataType: int64
+		lineageTag: a5d863fd-9c41-4a95-8eee-f798b7d5f6a5
+		summarizeBy: none
+		sourceColumn: Palets
+
+	partition Envios = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Envios.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"EnvioID", type text}, {"Escenario", type text}, {"ViajeID", type text}, {"ProveedorID", type text}, {"Categoría", type text}, {"Modo", type text}, {"Vía", type text}, {"RutaID", type text}, {"Origen", type text}, {"Destino", type text}, {"PO", type text}, {"Fecha pedido", type datetime}, {"Listo en origen", type datetime}, {"Salida", type datetime}, {"Llegada", type datetime}, {"Entrega", type datetime}, {"Entrega prevista", type datetime}, {"Retraso (días)", type number}, {"Valor (€)", Int64.Type}, {"Flete (€)", Int64.Type}, {"Palets", Int64.Type}}, "en-US")
+				in
+				    Tipos
+

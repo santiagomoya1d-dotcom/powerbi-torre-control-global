@@ -1,0 +1,62 @@
+/// Posición de cada viaje a mediodía de cada día en ruta (y el punto un poco más adelante, para orientar el icono).
+table Posiciones
+	lineageTag: d007fc7c-63d5-428b-b6b6-1bc870f1fa02
+
+	column ViajeID
+		dataType: string
+		isHidden
+		lineageTag: 65c01c1a-0f7d-426b-b09b-fd7e45584604
+		sourceColumn: ViajeID
+
+	column Fecha
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 2d881e38-160c-47a8-bc2d-c5ef753453f3
+		sourceColumn: Fecha
+
+	column Lon
+		dataType: double
+		lineageTag: 54526fec-d841-49c2-8e1d-69f436a10aad
+		summarizeBy: none
+		sourceColumn: Lon
+
+	column Lat
+		dataType: double
+		lineageTag: 4b4ef6c7-3570-4a09-8a5a-f8a0350e04d3
+		summarizeBy: none
+		sourceColumn: Lat
+
+	column 'Lon siguiente'
+		dataType: double
+		lineageTag: 2e48ed3e-1001-4e82-9a54-b9a5583b4a5d
+		summarizeBy: none
+		sourceColumn: Lon siguiente
+
+	column 'Lat siguiente'
+		dataType: double
+		lineageTag: 1b4eb660-e02d-46b9-b9ee-618e987cd451
+		summarizeBy: none
+		sourceColumn: Lat siguiente
+
+	column Progreso
+		dataType: double
+		lineageTag: 875cbc2b-248f-4adf-b529-b7de69f55327
+		summarizeBy: none
+		sourceColumn: Progreso
+
+	column Estado
+		dataType: string
+		lineageTag: 07167fbe-d534-4c5d-8312-88f3d7d7bebf
+		sourceColumn: Estado
+
+	partition Posiciones = m
+		mode: import
+		source =
+				let
+				    Origen = Csv.Document(File.Contents(CarpetaDatos & "Posiciones.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),
+				    SinVacios = Table.ReplaceValue(Encabezados, "", null, Replacer.ReplaceValue, Table.ColumnNames(Encabezados)),
+				    Tipos = Table.TransformColumnTypes(SinVacios, {{"ViajeID", type text}, {"Fecha", type date}, {"Lon", type number}, {"Lat", type number}, {"Lon siguiente", type number}, {"Lat siguiente", type number}, {"Progreso", type number}, {"Estado", type text}}, "en-US")
+				in
+				    Tipos
+

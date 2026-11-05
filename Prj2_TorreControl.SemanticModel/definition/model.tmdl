@@ -1,0 +1,29 @@
+/// Torre de control de aprovisionamiento global: un año simulado de envíos por mar, aire y carretera, con dos escenarios. Todos los datos son inventados.
+model Model
+	culture: es-ES
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: es-ES
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_ProTooling = ["MCP-PBIModeling","DevMode"]
+
+ref table Envios
+ref table Viajes
+ref table Posiciones
+ref table Incidencias
+ref table Proveedores
+ref table Nodos
+ref table Rutas
+ref table Categorías
+ref table Escenarios
+ref table Modos
+ref table Calendario
+ref table Torre
+ref table Medidas
+
+ref cultureInfo es-ES
+

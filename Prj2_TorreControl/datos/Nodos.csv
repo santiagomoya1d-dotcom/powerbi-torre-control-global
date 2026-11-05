@@ -1,0 +1,24 @@
+NodoID,Nodo,País,Tipo,Lon,Lat
+SHA,Shanghái,China,origen,121.8,31.2
+NGB,Ningbo,China,origen,121.9,29.9
+YTN,Shenzhen,China,origen,114.3,22.55
+SGN,Ho Chi Minh,Vietnam,origen,106.8,10.7
+BUS,Busan,Corea del Sur,origen,129.05,35.1
+NSA,Nhava Sheva,India,origen,72.95,18.95
+IST,Estambul,Turquía,origen,28.68,40.97
+SSZ,Santos,Brasil,origen,-46.3,-23.95
+VER,Veracruz,México,origen,-96.13,19.2
+SAV,Savannah,Estados Unidos,origen,-81.0,32.08
+VLC,Valencia,España,destino,-0.32,39.44
+ALG,Algeciras,España,destino,-5.43,36.13
+BCN,Barcelona,España,destino,2.17,41.35
+PVG,Aeropuerto de Shanghái,China,aeropuerto,121.8,31.15
+ICN,Aeropuerto de Seúl,Corea del Sur,aeropuerto,126.45,37.46
+MAA,Aeropuerto de Chennai,India,aeropuerto,80.17,12.99
+MAD,Aeropuerto de Madrid,España,aeropuerto,-3.57,40.47
+MALACA,Estrecho de Malaca,,paso,100.2,3.6
+BAB,Bab el-Mandeb,,paso,43.35,12.55
+SUEZ,Canal de Suez,,paso,32.55,30.6
+GIBRALTAR,Estrecho de Gibraltar,,paso,-5.75,35.95
+CABO,Cabo de Buena Esperanza,,paso,18.5,-35.2
+CD-01,Almacén CD-01 · Madrid,España,almacén,-3.56,40.42

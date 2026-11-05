@@ -1,0 +1,32 @@
+relationship cc5c2919-4449-42b8-8429-b93eb487599f
+	fromColumn: Viajes.Escenario
+	toColumn: Escenarios.Escenario
+
+relationship c6ed8307-03d8-43cc-9324-9a1836a80a58
+	fromColumn: Viajes.Modo
+	toColumn: Modos.Modo
+
+relationship 44254ddb-e4cc-469c-9018-7b188af5044f
+	fromColumn: Viajes.RutaID
+	toColumn: Rutas.RutaID
+
+relationship fa175ec2-5a15-43d6-b534-c5a94675ae49
+	fromColumn: Envios.ViajeID
+	toColumn: Viajes.ViajeID
+
+relationship fb4c3a4b-f24c-4c45-b738-d6d798d1ffe6
+	fromColumn: Posiciones.ViajeID
+	toColumn: Viajes.ViajeID
+
+relationship 8167c707-6b9d-428f-af56-86270659f736
+	fromColumn: Envios.ProveedorID
+	toColumn: Proveedores.ProveedorID
+
+relationship 28ff72a8-8d29-4d56-9df7-8a1fa759e43e
+	fromColumn: Envios.Categoría
+	toColumn: Categorías.Categoría
+
+relationship 20264a19-1b82-4cc6-9147-28ac81cdb08a
+	fromColumn: Incidencias.Escenario
+	toColumn: Escenarios.Escenario
+
