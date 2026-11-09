@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Globo</title>
+<!-- El globo vive en su propio marco, como el objeto visual de Deneb en Power BI: así el ratón se calcula en las
+     coordenadas del propio globo aunque la página esté escalada. La página le pasa la especificación y las filas. -->
+<style>html,body{margin:0;padding:0;overflow:hidden;background:transparent}#v{width:100vw;height:100vh}#v canvas{display:block}</style>
+<script src="lib/vega.min.js"></script>
+</head>
+<body>
+<div id="v"></div>
+<script>
+let vista = null;
+let pendiente = Promise.resolve();
+// Etiquetas emergentes: las dibuja la página (fuera del marco), como Power BI con las de Deneb.
+function tooltip(handler, event, item, value) {
+  const p = window.parent;
+  if (p && p.tooltipGlobo) p.tooltipGlobo(window.frameElement, value, event ? event.clientX : 0, event ? event.clientY : 0);
+}
+window.pintar = function (spec, filas) {
+  pendiente = pendiente.then(async () => {
+    if (!vista) {
+      const sp = JSON.parse(JSON.stringify(spec));
+      sp.width = document.documentElement.clientWidth;
+      sp.height = document.documentElement.clientHeight;
+      sp.data.find((d) => d.name === "dataset").values = filas;
+      vista = new vega.View(vega.parse(sp), { renderer: "canvas", container: "#v", hover: true, tooltip });
+      await vista.runAsync();
+      window.vista = vista;
+    } else {
+      vista.data("dataset", filas);
+      await vista.runAsync();
+    }
+  }).catch((e) => console.error(e));
+  return pendiente;
+};
+window.addEventListener("mouseleave", () => tooltip(null, null, null, null));
+</script>
+</body>
+</html>

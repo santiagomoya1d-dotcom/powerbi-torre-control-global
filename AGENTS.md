@@ -11,6 +11,7 @@ Este repositorio es una plantilla: un informe de Power BI con un globo 3D (Deneb
 | `Prj2_TorreControl/datos/*.csv` | `generador/generar_datos.py` |
 | `Prj2_TorreControl/globo/torre_globo.vega.json` | `globo/construir_globo.py` |
 | La especificación Vega dentro del visual del globo (`Prj2_TorreControl.Report/definition/pages/torre/visuals/globo/visual.json`) y el tema en `StaticResources/RegisteredResources/` | `generador/pagina_torre.py` |
+| `docs/datos/*.json` (datos, maqueta del informe y globo de la versión web) | `web/construir_web.py` |
 
 **Lo demás se edita en Power BI Desktop** y se guarda como texto:
 - las cuatro páginas (Torre, Mar, Aire y Carretera) y sus objetos visuales;
@@ -37,12 +38,23 @@ Prj2_TorreControl/
     banco.py                 dibuja el globo con datos de muestra en un HTML, sin Power BI
     validar_pbir.py          valida el informe contra los esquemas JSON de Microsoft
   informe/                   tema claro (fuente; se copia al informe)
+  web/
+    construir_web.py         docs/datos/: tablas, maqueta (páginas, visuales, marcadores, formatos) y globo
+    pruebas/                 comprueba la web contra Power BI (contextos.json, sacar_*.py, comprobar*.mjs)
+docs/                        versión web que publica GitHub Pages
+  index.html, estilo.css     la página: 1920 × 1080 escalada a la ventana, como «Ajustar a la página»
+  globo.html                 el globo en su propio marco (como Deneb), con Vega 6.4 de lib/
+  js/modelo.js               tablas, relaciones, filtros y las 46 medidas de cálculo, traducidas del DAX
+  js/html/*.js               las 23 medidas HTML (marco, indicadores, listas), traducidas del DAX
+  js/app.js                  estado del informe: segmentadores sincronizados, marcadores, selección cruzada
+  js/nativos.js, paginas_modo.js   visuales nativos rehechos: segmentadores, botones, curva, tarjetas, barras y tablas
 ```
 
 ## Requisitos
 
 - Python 3.11 o posterior con `pandas` y `numpy`.
 - Para `validar_pbir.py`: `jsonschema` y `referencing`, además de conexión a internet.
+- Para las pruebas de la versión web: Node.js 18 o posterior.
 
 ## Recetas
 
@@ -73,6 +85,10 @@ Todas terminan con `python construir.py`, que se lanza desde `Prj2_TorreControl/
 3. **Informe.** `python herramientas/validar_pbir.py "<ruta de Prj2_TorreControl.Report>"` debe terminar con «Archivos con errores: 0».
 4. **Modelo.** Con Power BI Desktop abierto y el servidor MCP de modelado: `EVALUATE FILTER(INFO.MEASURES(), [State] <> 1)` debe devolver una tabla vacía.
 5. **Botones.** En Desktop se prueban con Ctrl + clic: menú de páginas, «···» de cada tarjeta (paneles), flecha y pastilla de la tarjeta del escenario, calendario y ayuda.
+6. **Versión web.**
+   - Con Power BI Desktop abierto, `python web/pruebas/sacar_esperado.py` y `python web/pruebas/sacar_globo.py` guardan lo que devuelve Power BI en las situaciones de `web/pruebas/contextos.json`.
+   - `node web/pruebas/comprobar.mjs` debe terminar con todos los valores iguales, y `node web/pruebas/comprobar_globo.mjs` con todas las situaciones iguales.
+   - Para verla, sirve `docs/` (`python -m http.server --directory docs`) y abre `http://localhost:8000/`.
 
 ## Cosas que no son evidentes
 
@@ -88,6 +104,11 @@ Todas terminan con `python construir.py`, que se lanza desde `Prj2_TorreControl/
   - No importes las versiones standalone ni la edición normal de HTML Content: cambian el identificador del visual y no están certificadas.
   - HTML Content Secure limpia el HTML antes de pintarlo. Solo pasan las etiquetas y los atributos de su lista; quita las `url()` externas, `attr()`, los scripts, los atributos `on…` y los recursos remotos. Las reglas están en su [documentación](https://github.com/dm-p/powerbi-visuals-html-content/blob/main/docs/sanitization-rules.md).
   - Deneb certificado no carga nada de internet: los datos y el mapa van dentro de la especificación.
+- **Versión web (`docs/`).**
+  - Se monta a partir de los archivos del informe (`docs/datos/informe.json`): posiciones, capas, formato, marcadores, sincronización de segmentadores e interacciones. Si mueves o cambias un visual en Desktop, `python web/construir_web.py` lo lleva a la web.
+  - Las medidas no se leen del modelo: están traducidas a JavaScript. **Si cambias una medida DAX, cambia también su traducción** (`docs/js/modelo.js` o `docs/js/html/*.js`) y vuelve a comprobar contra Power BI.
+  - Cada tarjeta HTML va en su propio marco con los estilos base de HTML Content, y el globo en `globo.html`: así el CSS de una tarjeta no afecta a otra y el ratón funciona aunque la página esté escalada.
+  - `formato.js` reproduce FORMAT de DAX a mano (Intl no agrupa los miles igual que Power BI).
 - **Vega dentro de Deneb.**
   - Las transformaciones `geoshape` de una marca leen el campo como `datum.campo` (por ejemplo, `field: 'datum.geo'`).
   - La noche se construye como expresión de una señal.

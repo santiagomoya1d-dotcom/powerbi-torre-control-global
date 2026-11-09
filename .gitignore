@@ -10,6 +10,10 @@ __pycache__/
 Prj2_TorreControl/herramientas/banco.html
 Prj2_TorreControl/herramientas/maqueta.html
 
+# Lo que devolvió Power BI para comprobar la web (3 MB; se saca con web/pruebas/sacar_*.py con Desktop abierto)
+Prj2_TorreControl/web/pruebas/esperado*.json
+Prj2_TorreControl/web/pruebas/_*.json
+
 # Sistema
 Thumbs.db
 desktop.ini

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Construye todo a partir de red.config.json, en orden, y para en el primer fallo:
-datos (simulación de los escenarios) → globo (Vega) → informe (PBIR: el globo y el tema).
+datos (simulación de los escenarios) → globo (Vega) → informe (PBIR: el globo y el tema) → web (docs/datos/).
 
 Uso:
   python construir.py                 simula el año con la configuración y lo monta todo
@@ -55,6 +55,7 @@ def main() -> None:
               "y luego http://localhost:8000/banco.html")
     else:
         paso("Informe (globo y tema)", "generador/pagina_torre.py", *cfg)
+        paso("Web (datos y maqueta de docs/)", "web/construir_web.py")
         print("\nListo. Abre el .pbip en Power BI Desktop y pulsa «Actualizar» si cambiaron los datos.")
 
 

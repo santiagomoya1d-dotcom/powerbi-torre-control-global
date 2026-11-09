@@ -1,0 +1,66 @@
+/* Versión web del informe «Torre de control». La página mide 1920 × 1080 como en Power BI y se escala para caber
+   en la ventana («Ajustar a la página»); fuera de ella se ve el color de fondo exterior del informe. */
+:root {
+  --exterior: #E3E6E0;
+  --letra: 'Segoe UI Variable Display', 'Segoe UI', 'Selawik', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--exterior);
+  font-family: var(--letra);
+  -webkit-font-smoothing: antialiased;
+}
+
+#exterior { position: fixed; inset: 0; overflow: hidden; }
+
+#lienzo {
+  position: absolute;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: #ECEEEA;
+}
+
+/* Contenedor de cada objeto visual: posición, capa, fondo, borde y radio como en el archivo del informe. */
+.vis { position: absolute; box-sizing: border-box; overflow: hidden; }
+.vis > .cuerpo { position: absolute; overflow: hidden; }
+.vis .titulo { position: absolute; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vis iframe { display: block; border: 0; width: 100%; height: 100%; background: transparent; }
+
+/* Botones del informe: transparentes, encima de los iconos que dibuja el HTML. */
+.boton { cursor: pointer; }
+.boton:focus-visible { outline: 2px solid #161616; outline-offset: 2px; border-radius: 12px; }
+
+/* Segmentador de botones (advancedSlicerVisual) */
+.seg { display: grid; width: 100%; height: 100%; box-sizing: border-box; }
+.seg button {
+  font: inherit; margin: 0; padding: 0 6px; min-width: 0; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+.seg button:focus-visible { outline: 2px solid #161616; outline-offset: 1px; }
+
+/* Etiqueta emergente con el aspecto de las de Power BI */
+#tooltip {
+  position: fixed; z-index: 1000; pointer-events: none; max-width: 360px;
+  background: #FFFFFF; color: #252423; border: 1px solid #E1DFDD; border-radius: 4px;
+  box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, .13), 0 .6px 1.8px rgba(0, 0, 0, .11);
+  font: 12px/1.35 'Segoe UI', 'Selawik', -apple-system, Arial, sans-serif; padding: 6px 10px;
+}
+#tooltip table { border-collapse: collapse; }
+#tooltip td { padding: 2px 0; vertical-align: top; }
+#tooltip td.k { color: #605E5C; padding-right: 16px; white-space: nowrap; }
+#tooltip td.v { font-weight: 600; }
+#tooltip .solo { white-space: nowrap; }
+
+#cargando {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: var(--exterior); color: #3B3D3A; font-size: 15px; letter-spacing: .01em; z-index: 2000;
+  transition: opacity .25s;
+}
+#cargando.fuera { opacity: 0; pointer-events: none; }
+.sinjs { position: fixed; inset: 0; margin: 0; display: grid; place-items: center; font-family: var(--letra); }

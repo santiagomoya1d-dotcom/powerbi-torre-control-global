@@ -52,3 +52,11 @@ Resultado con la configuración de serie: 2.672 cargas al año por escenario (14
 - **Animación:** con `vista.animado` en `false` (de serie), las cuentas y los latidos quedan quietos y el globo solo se redibuja al girarlo, acercarlo o cambiar de vista.
 
 Los puntos de la cara oculta se esconden calculando su distancia angular al centro de la vista.
+
+## La versión web
+
+`docs/` es el informe llevado al navegador; lo publica GitHub Pages.
+- **De dónde sale:** `web/construir_web.py` escribe `docs/datos/` con los mismos CSV que carga Power BI (fechas como número de serie de DAX), la maqueta del informe leída de los archivos PBIR (páginas, visuales, formato, marcadores, segmentadores sincronizados, interacciones y cadenas de formato) y la especificación del globo.
+- **Medidas:** traducidas de DAX a JavaScript, con el mismo nombre. Las 46 de cálculo están en `docs/js/modelo.js`, con las relaciones y los filtros del modelo; las 23 HTML, en `docs/js/html/`. FORMAT se reproduce a mano en `docs/js/formato.js`.
+- **Cómo se comprueba:** con Power BI Desktop abierto, `web/pruebas/sacar_esperado.py` y `sacar_globo.py` sacan por DAX lo que devuelve Power BI en las situaciones de `contextos.json`, y `comprobar.mjs` y `comprobar_globo.mjs` lo comparan con la web. Hoy: 2.070 de 2.070 valores iguales (69 medidas × 30 situaciones) y las mismas filas del globo en las 30.
+- **Visuales:** las tarjetas HTML y el globo van cada uno en su propio marco, como en Power BI. Los segmentadores, los botones, la curva, las tarjetas nativas, las barras y las tablas se rehacen con el formato que guarda el informe.

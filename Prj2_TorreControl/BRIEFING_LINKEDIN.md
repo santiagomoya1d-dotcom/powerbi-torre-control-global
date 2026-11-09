@@ -73,7 +73,11 @@ Por defecto abre el **5 de marzo de 2026**, en la cuarta semana del cierre simul
 6. **Rendimiento:** la curva del año lee una tabla puente precalculada (una consulta para los 365 días en vez de una por día) y el globo solo se redibuja al moverlo.
 7. **Diseño:** estilo claro de aplicación moderna (tinta, lima y gris salvia, letra Segoe UI Variable).
 8. **Informe como código:** todo el informe está en archivos de texto (PBIP/PBIR) y se valida contra los esquemas de Microsoft; el modelo vive en TMDL. El globo y el tema salen de scripts.
-9. **Plantilla:** toda la red está en un archivo de configuración. Añadir un proveedor, una ruta o un escenario nuevo (por ejemplo, el cierre de Panamá) es cambiar ese archivo y lanzar una orden. Trae una guía para que otro agente de IA lo adapte. El repositorio incluye los datos, así que el informe se abre listo.
+9. **Versión web:** el mismo informe en el navegador, sin instalar Power BI: https://santiagomoya1d-dotcom.github.io/powerbi-torre-control-global/
+   - Se monta a partir de los archivos del informe (páginas, botones, marcadores, formato) y de los mismos datos.
+   - Las 69 medidas DAX están traducidas a JavaScript y comprobadas contra Power BI: en 30 situaciones de prueba dan los mismos 2.070 valores, incluido el HTML de cada tarjeta carácter a carácter.
+   - El globo es la misma especificación Vega y recibe las mismas filas que en Power BI.
+10. **Plantilla:** toda la red está en un archivo de configuración. Añadir un proveedor, una ruta o un escenario nuevo (por ejemplo, el cierre de Panamá) es cambiar ese archivo y lanzar una orden. Trae una guía para que otro agente de IA lo adapte. El repositorio incluye los datos, así que el informe se abre listo.
 
 ## 5. Cifras comprobadas
 
@@ -111,6 +115,7 @@ Por defecto abre el **5 de marzo de 2026**, en la cuarta semana del cierre simul
 - **«El 80 % de lo que viene depende de una sola ruta»:** riesgo de concentración, en una tarjeta.
 - **«No es un mapa, es una máquina del tiempo»:** eliges un día y ves dónde estaba cada barco.
 - **«Segunda entrega de la serie»:** del almacén a la red global que lo abastece.
+- **«Pruébalo sin Power BI»:** el enlace abre la torre en el navegador; se puede girar el globo, cambiar de escenario y abrir los paneles.
 - **Llamada a la acción:** el repositorio es público; se descarga, se abre con los datos dentro y se puede adaptar a la propia red.
 
 ## 8. Lo que no hay que afirmar
@@ -122,6 +127,7 @@ Por defecto abre el **5 de marzo de 2026**, en la cuarta semana del cierre simul
 - **Las rutas y los barcos no están animados de forma continua:** el globo se mueve cuando lo giras, lo acercas o cambias de vista o de día. No digas que los barcos «navegan en directo».
 - **Deneb, HTML Content y el mapa son de terceros** (licencias MIT, MIT e ISC, con datos de Natural Earth en dominio público).
 - **Lo certificado son los dos objetos visuales, no el informe.** No digas que Microsoft certificó el proyecto.
+- **La versión web no es Power BI.** Es el mismo informe rehecho en JavaScript a partir de sus archivos. No digas que es Power BI incrustado ni «Publicar en la web». Lo nativo de Power BI (botones, segmentadores, curva, barras y tablas) está rehecho con el mismo formato.
 - **Hace falta conexión al abrirlo:** Power BI descarga los dos visuales de AppSource. No digas que funciona sin internet.
 
 ## 9. Glosario rápido
