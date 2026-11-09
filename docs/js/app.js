@@ -203,7 +203,7 @@ function crearVisual(p, v, capa) {
 }
 
 // Gráficos nativos de las páginas Mar, Aire y Carretera (tarjetas, barras y tablas)
-const nativos = crearNativosPagina({ modelo, estado, pintar: () => pintar(), contexto, contextoSinCruce, formatos: informe.formatos });
+const nativos = crearNativosPagina({ modelo, estado, pintar: () => pintar(), contexto, contextoSinCruce, formatos: informe.formatos, tipos: informe.tipos });
 function nativosPagina(p, v, caja) { return nativos(p, v, caja); }
 
 // ------------------------------------------------------------------------------------------------ páginas

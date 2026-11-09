@@ -160,7 +160,7 @@ export function boton(v, cuerpo, accion, texto) {
 }
 
 // --------------------------------------------------------------------------------------------- gráfico de líneas
-const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const SVG = "http://www.w3.org/2000/svg";
 const nodo = (tag, attrs = {}, padre = null) => {
   const n = document.createElementNS(SVG, tag);
@@ -195,16 +195,21 @@ export function lineas(v, cuerpo, alPulsar) {
     const ys = series.flatMap((s) => s.valores.map((p) => p.y)).filter((y) => !esBlank(y));
     if (!ys.length) return;                         // sin datos, Power BI deja el gráfico vacío
     const maxY = Math.max(0, ...ys);
-    // Escala «bonita» con 2-3 marcas, como el eje automático de Power BI
-    const paso = pasoBonito(maxY / 2);
-    const tope = Math.max(paso, Math.ceil(maxY / paso) * paso);
-    const marcas = [];
-    for (let m = 0; m <= tope + 1e-6; m += paso) marcas.push(m);
     const altoLeyenda = ley.show === false ? 0 : Math.round(tamL * 1.6);
+    // Como Power BI: en un gráfico bajo (la curva de la Torre) se quitan las fechas del eje X
+    const conEjeX = ejeX.show !== false && H >= 140;
+    const altoX = conEjeX ? Math.round(tamX * 1.7) : 0;
+    const y0 = altoLeyenda + 4, y1 = H - altoX - (conEjeX ? 0 : 4);
+    // Eje Y como el automático de Power BI: un poco por encima del máximo y con las marcas que caben (una cada ~80 px),
+    // con el mayor paso «redondo» que no se pasa del máximo (0 y 20 en la Torre; 0, 10 y 20 en Mar)
+    const nMarcas = Math.max(2, Math.floor((y1 - y0) / 80));
+    const paso = pasoBonitoAbajo(maxY / (nMarcas - 1));
+    const tope = maxY * 1.1 || paso;
+    const marcas = [];
+    for (let m = 0; m <= maxY + 1e-6; m += paso) marcas.push(m);
     const dec = paso / 1e6 >= 1 ? 0 : Math.min(2, Math.ceil(-Math.log10(paso / 1e6) - 1e-9));
     const anchoY = Math.max(...marcas.map((m) => medir(millones(m, dec), tamY))) + 8;
-    const altoX = ejeX.show === false ? 0 : Math.round(tamX * 1.7);
-    const x0 = anchoY, x1 = W - 4, y0 = altoLeyenda + 4, y1 = H - altoX;
+    const x0 = anchoY, x1 = W - 4;
     const sx = (x) => x0 + ((x - xs[0]) / (xs[xs.length - 1] - xs[0] || 1)) * (x1 - x0);
     const sy = (y) => y1 - (y / tope) * (y1 - y0);
     const fuente = ejeY.fontFamily || LETRA;
@@ -214,13 +219,14 @@ export function lineas(v, cuerpo, alPulsar) {
       const t = nodo("text", { x: x0 - 6, y: sy(m), "text-anchor": "end", "dominant-baseline": "middle", fill: ejeY.labelColor || "#8A8F87", "font-size": tamY, "font-family": fuente }, svg);
       t.textContent = millones(m, dec);
     }
-    // etiquetas del eje X: primer día de cada trimestre que cabe
-    if (ejeX.show !== false) {
+    // etiquetas del eje X: el día 1 de cada 1, 2, 3, 4, 6 o 12 meses (enero, marzo, mayo… con 2), lo que quepa con holgura
+    if (conEjeX) {
       const meses = xs.filter((x) => aFecha(x).getUTCDate() === 1);
-      const cada = Math.max(1, Math.ceil(meses.length / Math.max(1, Math.floor((x1 - x0) / (medir("sept 2026", tamX) + 18)))));
-      meses.forEach((x, i) => {
-        if (i % cada) return;
+      const anchoMes = (x1 - x0) / Math.max(1, (xs[xs.length - 1] - xs[0]) / 30.44);
+      const cada = [1, 2, 3, 4, 6, 12].find((n) => n * anchoMes >= 110) || 12;
+      meses.forEach((x) => {
         const f = aFecha(x);
+        if (f.getUTCMonth() % cada) return;
         const t = nodo("text", { x: sx(x), y: H - 4, "text-anchor": "middle", fill: ejeX.labelColor || "#8A8F87", "font-size": tamX, "font-family": ejeX.fontFamily || LETRA }, svg);
         t.textContent = `${MESES_CORTOS[f.getUTCMonth()]} ${f.getUTCFullYear()}`;
       });
@@ -276,11 +282,12 @@ export function lineas(v, cuerpo, alPulsar) {
   return { actualizar };
 }
 
-function pasoBonito(x) {
+/** El mayor paso «redondo» (1, 2, 2,5 o 5 × 10ⁿ) que no supera x. */
+function pasoBonitoAbajo(x) {
   if (x <= 0) return 1;
   const e = 10 ** Math.floor(Math.log10(x));
-  for (const m of [1, 2, 2.5, 5, 10]) if (m * e >= x) return m * e;
-  return 10 * e;
+  for (const m of [5, 2.5, 2, 1]) if (m * e <= x + 1e-9) return m * e;
+  return e;
 }
 
 let lienzoMedidas = null;

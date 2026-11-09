@@ -168,8 +168,8 @@ def marcador(b: dict) -> dict:
     return salida
 
 
-def formatos(proyecto: Path) -> dict:
-    """Cadena de formato de cada medida y columna del modelo ({"Tabla.Campo": "#,0 €"}), como la usa Power BI."""
+def formatos(proyecto: Path, clave: str = "formatString") -> dict:
+    """Cadena de formato (o tipo, con clave="dataType") de cada medida y columna del modelo: {"Tabla.Campo": valor}."""
     import re
     salida = {}
     for f in sorted(next(proyecto.glob("*.SemanticModel")).glob("definition/tables/*.tmdl")):
@@ -184,7 +184,7 @@ def formatos(proyecto: Path) -> dict:
             if m:
                 actual = f"{tabla}.{m.group(1)}"
                 continue
-            m = re.match(r"^\t\tformatString: (.+)$", linea)
+            m = re.match(rf"^\t\t{clave}: (.+)$", linea)
             if m and actual:
                 salida[actual] = m.group(1).strip()
     return salida
@@ -205,6 +205,7 @@ def informe(proyecto: Path) -> dict:
                         "visuales": sorted(visuales, key=lambda x: x["pos"].get("z", 0))})
     tema = leer(inf / "StaticResources" / "RegisteredResources" / "TemaTorreClaro.json")
     return {"paginas": paginas, "activa": meta.get("activePageName"), "tema": tema, "formatos": formatos(proyecto),
+            "tipos": formatos(proyecto, "dataType"),
             "marcadores": [marcador(leer(f)) for f in sorted((d / "bookmarks").glob("*.bookmark.json"))]}
 
 

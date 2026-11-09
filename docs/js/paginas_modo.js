@@ -9,9 +9,10 @@ const LETRA = "'Segoe UI Variable Display', 'Segoe UI', 'Selawik', -apple-system
 const UNIDADES = { 1000: " mil", 1000000: " mill.", 1000000000: " mil M" };
 
 /** Valor con la cadena de formato del modelo, las unidades y los decimales del objeto visual, como Power BI (es-ES). */
-export function formatoPBI(v, formato, unidades = 0, decimales = null) {
+export function formatoPBI(v, formato, unidades = 0, decimales = null, tipo = null) {
   if (esBlank(v)) return "";
   if (typeof v === "string") return v;
+  if (!formato && tipo === "double") return FORMAT(v, "0.00", "es-ES");   // decimal sin formato: «20,60», como Power BI
   if (formato && /d|y|h|n/.test(formato) && !/[#0]/.test(formato)) {
     const f = aFecha(v);
     const dos = (n) => String(n).padStart(2, "0");
@@ -35,11 +36,14 @@ export function formatoPBI(v, formato, unidades = 0, decimales = null) {
     const [e, d] = texto.split(",");
     texto = e.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + d;
   }
-  return texto + unidad + (porcentaje ? "%" : sufijo.replace("%", ""));
+  // Como Power BI con es-ES: «6,2 mill.€» (la abreviatura con punto va pegada a la moneda) y «392 mil €»
+  const resto = porcentaje ? "%" : sufijo.replace("%", "");
+  return texto + unidad + (unidad.endsWith(".") ? resto.trimStart() : resto);
 }
 
-export function crearNativosPagina({ modelo, estado, pintar, contexto, contextoSinCruce, formatos }) {
+export function crearNativosPagina({ modelo, estado, pintar, contexto, contextoSinCruce, formatos, tipos = {} }) {
   const fmtCampo = (c) => formatos[`${c.tabla}.${c.campo}`];
+  const tipoCampo = (c) => tipos[`${c.tabla}.${c.campo}`];
   const medida = (c, f) => modelo.M[c.campo](f);
 
   function seleccionar(p, v, filtros, valor) {
@@ -91,13 +95,15 @@ export function crearNativosPagina({ modelo, estado, pintar, contexto, contextoS
       const fmt = (x) => formatoPBI(x, fmtCampo(y), et.labelDisplayUnits || 0, et.labelPrecision ?? null);
       const anchoEt = Math.max(0, ...filas.map((x) => medir(fmt(Math.max(x.v ?? 0, x.r ?? 0)), tamEt))) + 8;
       const max = Math.max(0, ...filas.map((x) => Math.max(x.v ?? 0, x.r ?? 0)));
-      const paso = filas.length ? Math.min(H / filas.length, 34) : 0;
-      const alto = paso * 0.8;
+      // Como Power BI: las categorías se reparten por todo el alto (con un margen arriba) y la barra no pasa de 15 px
+      const margen = 16;
+      const paso = filas.length ? (H - margen) / filas.length : 0;
+      const alto = Math.min(paso * 0.8, 15);
       const largo = (x) => (max > 0 && !esBlank(x) ? Math.max(0, x) / max * (W - anchoCat - anchoEt) : 0);
       cuerpo.replaceChildren();
       filas.forEach((x, i) => {
         const fila = document.createElement("div");
-        Object.assign(fila.style, { position: "absolute", left: "0", top: `${i * paso}px`, width: `${W}px`, height: `${paso}px`, cursor: "pointer" });
+        Object.assign(fila.style, { position: "absolute", left: "0", top: `${margen + i * paso}px`, width: `${W}px`, height: `${paso}px`, cursor: "pointer" });
         const nombre = document.createElement("div");
         Object.assign(nombre.style, { position: "absolute", left: "0", width: `${anchoCat - 8}px`, top: "0", height: `${paso}px`, display: "flex", alignItems: "center", justifyContent: "flex-end", color: ejeX.labelColor || "#3B3D3A", font: `400 ${tamCat}px ${ejeX.fontFamily || LETRA}`, whiteSpace: "nowrap", overflow: "hidden" });
         nombre.textContent = x.m;
@@ -139,10 +145,11 @@ export function crearNativosPagina({ modelo, estado, pintar, contexto, contextoS
     Object.assign(caja2.style, { position: "absolute", inset: "0", overflow: "auto", scrollbarWidth: "thin" });
     caja2.className = "tablaPBI";
     caja.cuerpo.appendChild(caja2);
-    const numerico = (c) => c.tipo === "Measure" || ["Retraso (días)", "Valor (€)", "Entrega", "Entrega prevista"].includes(c.campo);
+    // Números a la derecha; textos y fechas a la izquierda, como Power BI
+    const numerico = (c) => c.tipo === "Measure" || ["int64", "double", "decimal"].includes(tipoCampo(c));
     const celda = (c, fila) => {
       const x = fila[c.campo];
-      return formatoPBI(x, fmtCampo(c));
+      return formatoPBI(x, fmtCampo(c), 0, null, tipoCampo(c));
     };
     return (f) => {
       let filas;
@@ -173,9 +180,11 @@ export function crearNativosPagina({ modelo, estado, pintar, contexto, contextoS
       const cruz = estado.cruzado.get(p.nombre);
       const propia = cruz && cruz.visual === v.nombre;
       const borde = rej.gridHorizontal !== false ? `1px solid ${rej.gridHorizontalColor || "#E2E5DF"}` : "0";
+      // Cabecera: la columna por la que se ordena lleva un triangulito debajo del texto, a la izquierda, como Power BI
       const th = (c) => {
-        const flecha = orden && orden.campo === c.campo ? (orden.desc ? " ▾" : " ▴") : "";
-        return `<th data-campo="${escapar(c.campo)}" style="text-align:${numerico(c) ? "right" : "left"};color:${cab.fontColor || "#8A8F87"};background:${cab.backColor || "#F7F8F5"};font:400 ${tamC}px ${cab.fontFamily || LETRA};padding:4px 8px;white-space:nowrap;position:sticky;top:0;cursor:pointer;border-bottom:${borde}">${escapar(c.nombre || c.campo)}${flecha}</th>`;
+        const flecha = orden && orden.campo === c.campo
+          ? `<span style="position:absolute;left:8px;bottom:0;font-size:8px;line-height:8px;color:${cab.fontColor || "#8A8F87"}">${orden.desc ? "⏷" : "⏶"}</span>` : "";
+        return `<th data-campo="${escapar(c.campo)}" style="text-align:${numerico(c) ? "right" : "left"};color:${cab.fontColor || "#8A8F87"};background:${cab.backColor || "#F7F8F5"};font:400 ${tamC}px ${cab.fontFamily || LETRA};padding:4px 8px 9px;white-space:nowrap;position:sticky;top:0;cursor:pointer;border-bottom:${borde}"><span style="position:relative;display:inline-block">${escapar(c.nombre || c.campo)}</span>${flecha}</th>`;
       };
       const tr = (fila, i) => {
         const atenuada = propia && cruz.valor !== fila._clave;
@@ -184,7 +193,7 @@ export function crearNativosPagina({ modelo, estado, pintar, contexto, contextoS
         return `<tr data-clave="${escapar(fila._clave)}" style="background:${fondo || "transparent"};color:${letra || "#161616"};opacity:${atenuada ? 0.4 : 1};cursor:pointer">${cols.map((c) =>
           `<td style="text-align:${numerico(c) ? "right" : "left"};font:400 ${tamV}px ${val.fontFamily || LETRA};padding:4px 8px;white-space:nowrap;border-bottom:${borde}">${escapar(celda(c, fila))}</td>`).join("")}</tr>`;
       };
-      caja2.innerHTML = `<table style="border-collapse:collapse;width:100%"><thead><tr>${cols.map(th).join("")}</tr></thead><tbody>${filas.map(tr).join("")}</tbody></table>`;
+      caja2.innerHTML = `<table style="border-collapse:collapse;width:auto"><thead><tr>${cols.map(th).join("")}</tr></thead><tbody>${filas.map(tr).join("")}</tbody></table>`;
       caja2.querySelectorAll("th").forEach((x) => x.addEventListener("click", () => {
         const k = x.dataset.campo;
         orden = orden && orden.campo === k ? { campo: k, desc: !orden.desc } : { campo: k, desc: true };
