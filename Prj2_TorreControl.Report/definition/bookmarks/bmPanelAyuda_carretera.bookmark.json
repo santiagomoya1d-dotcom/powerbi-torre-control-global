@@ -1,0 +1,65 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "displayName": "Carretera · ayuda",
+  "name": "bmPanelAyuda_carretera",
+  "options": {
+    "applyOnlyToTargetVisuals": true,
+    "targetVisualNames": [
+      "panelAyuda_carretera",
+      "panelCalendario_carretera",
+      "calMes_carretera",
+      "calDia_carretera",
+      "btnCerrarPanel_carretera"
+    ],
+    "suppressData": true
+  },
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "carretera",
+    "sections": {
+      "carretera": {
+        "visualContainers": {
+          "panelAyuda_carretera": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {}
+            }
+          },
+          "panelCalendario_carretera": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "calMes_carretera": {
+            "singleVisual": {
+              "visualType": "advancedSlicerVisual",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "calDia_carretera": {
+            "singleVisual": {
+              "visualType": "advancedSlicerVisual",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "btnCerrarPanel_carretera": {
+            "singleVisual": {
+              "visualType": "actionButton",
+              "objects": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

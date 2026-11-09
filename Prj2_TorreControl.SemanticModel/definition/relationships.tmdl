@@ -30,3 +30,11 @@ relationship 20264a19-1b82-4cc6-9147-28ac81cdb08a
 	fromColumn: Incidencias.Escenario
 	toColumn: Escenarios.Escenario
 
+relationship 5ee5cf63-affa-5eca-a19f-89e8e38f9761
+	fromColumn: 'Envios por día'.EnvioID
+	toColumn: Envios.EnvioID
+
+relationship 68b23f1e-66e9-53fd-9477-b53e18f3cc9a
+	fromColumn: 'Envios por día'.Fecha
+	toColumn: Calendario.Fecha
+

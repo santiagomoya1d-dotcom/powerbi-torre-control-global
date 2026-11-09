@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "llegadas",
   "position": {
-    "x": 1468,
-    "y": 566,
-    "z": 8000,
-    "width": 420,
-    "height": 196,
-    "tabOrder": 8000
+    "x": 564,
+    "y": 812,
+    "z": 6000,
+    "width": 896,
+    "height": 248,
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",

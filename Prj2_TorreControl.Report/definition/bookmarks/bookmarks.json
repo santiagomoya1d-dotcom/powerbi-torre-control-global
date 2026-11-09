@@ -1,0 +1,56 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarksMetadata/1.0.0/schema.json",
+  "items": [
+    {
+      "name": "bmPanelTransito"
+    },
+    {
+      "name": "bmPanelExposicion"
+    },
+    {
+      "name": "bmPanelRetraso"
+    },
+    {
+      "name": "bmPanelAyuda"
+    },
+    {
+      "name": "bmPanelCalendario"
+    },
+    {
+      "name": "bmCerrarPanel"
+    },
+    {
+      "name": "bmEscBase"
+    },
+    {
+      "name": "bmEscCierre"
+    },
+    {
+      "name": "bmPanelAyuda_mar"
+    },
+    {
+      "name": "bmPanelCalendario_mar"
+    },
+    {
+      "name": "bmCerrarPanel_mar"
+    },
+    {
+      "name": "bmPanelAyuda_aire"
+    },
+    {
+      "name": "bmPanelCalendario_aire"
+    },
+    {
+      "name": "bmCerrarPanel_aire"
+    },
+    {
+      "name": "bmPanelAyuda_carretera"
+    },
+    {
+      "name": "bmPanelCalendario_carretera"
+    },
+    {
+      "name": "bmCerrarPanel_carretera"
+    }
+  ]
+}

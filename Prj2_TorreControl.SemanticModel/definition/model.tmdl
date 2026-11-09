@@ -11,6 +11,10 @@ model Model
 
 annotation PBI_ProTooling = ["MCP-PBIModeling","DevMode"]
 
+annotation PBI_QueryOrder = ["Envios","Viajes","Posiciones","Incidencias","Proveedores","Nodos","Rutas","Categorías","Escenarios","Modos","Calendario","Torre","CarpetaDatos"]
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
 ref table Envios
 ref table Viajes
 ref table Posiciones
@@ -24,6 +28,9 @@ ref table Modos
 ref table Calendario
 ref table Torre
 ref table Medidas
+ref table 'Foco desvío'
+ref table Horizonte
+ref table 'Envios por día'
 
 ref cultureInfo es-ES
 

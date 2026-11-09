@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "selectorModo",
   "position": {
-    "x": 552,
-    "y": 110,
-    "z": 4000,
+    "x": 1092,
+    "y": 144,
+    "z": 2600,
     "height": 40,
-    "width": 330,
-    "tabOrder": 4000
+    "width": 368,
+    "tabOrder": 2600
   },
   "visual": {
     "visualType": "advancedSlicerVisual",
@@ -102,7 +102,7 @@
             "cellPadding": {
               "expr": {
                 "Literal": {
-                  "Value": "4L"
+                  "Value": "3L"
                 }
               }
             },
@@ -129,7 +129,7 @@
             "rectangleRoundedCurve": {
               "expr": {
                 "Literal": {
-                  "Value": "8L"
+                  "Value": "16L"
                 }
               }
             }
@@ -151,7 +151,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0C1322'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -183,7 +183,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#2DD4BF'"
+                      "Value": "'#161616'"
                     }
                   }
                 }
@@ -215,7 +215,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#16233B'"
+                      "Value": "'#F7F8F5'"
                     }
                   }
                 }
@@ -249,7 +249,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#22324D'"
+                      "Value": "'#E2E5DF'"
                     }
                   }
                 }
@@ -288,7 +288,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#5EEAD4'"
+                      "Value": "'#161616'"
                     }
                   }
                 }
@@ -329,7 +329,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#94A3B8'"
+                      "Value": "'#161616'"
                     }
                   }
                 }
@@ -338,14 +338,14 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "11D"
+                  "Value": "12D"
                 }
               }
             },
             "fontFamily": {
               "expr": {
                 "Literal": {
-                  "Value": "'Segoe UI Semibold'"
+                  "Value": "'''Segoe UI Variable Display'', ''Segoe UI'', sans-serif'"
                 }
               }
             },
@@ -375,7 +375,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#04211D'"
+                      "Value": "'#FFFFFF'"
                     }
                   }
                 }
@@ -384,14 +384,14 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "11D"
+                  "Value": "12D"
                 }
               }
             },
             "fontFamily": {
               "expr": {
                 "Literal": {
-                  "Value": "'Segoe UI Semibold'"
+                  "Value": "'''Segoe UI Variable Display'', ''Segoe UI'', sans-serif'"
                 }
               }
             },
@@ -436,49 +436,7 @@
       ],
       "general": [
         {
-          "properties": {
-            "filter": {
-              "filter": {
-                "Version": 2,
-                "From": [
-                  {
-                    "Name": "m",
-                    "Entity": "Modos",
-                    "Type": 0
-                  }
-                ],
-                "Where": [
-                  {
-                    "Condition": {
-                      "In": {
-                        "Expressions": [
-                          {
-                            "Column": {
-                              "Expression": {
-                                "SourceRef": {
-                                  "Source": "m"
-                                }
-                              },
-                              "Property": "Modo"
-                            }
-                          }
-                        ],
-                        "Values": [
-                          [
-                            {
-                              "Literal": {
-                                "Value": "'Carretera'"
-                              }
-                            }
-                          ]
-                        ]
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
+          "properties": {}
         }
       ]
     },

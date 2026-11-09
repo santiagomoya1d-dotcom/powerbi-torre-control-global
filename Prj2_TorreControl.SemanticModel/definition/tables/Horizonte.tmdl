@@ -1,0 +1,28 @@
+/// Días que enseña «Llegadas al almacén»: lo elige el selector de la tarjeta.
+table Horizonte
+	lineageTag: cc610920-0f6c-59cf-9718-d9ef4321fd45
+
+	column Horizonte
+		dataType: string
+		lineageTag: 9aaa17d9-090e-5b26-833e-46a4a7c0a131
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Horizonte]
+		sortByColumn: Días
+
+		annotation SummarizationSetBy = Automatic
+
+	column Días
+		dataType: int64
+		formatString: 0
+		lineageTag: 2066c84f-52e8-58ad-b28f-0dd5611fef11
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Días]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Horizonte = calculated
+		mode: import
+		source = DATATABLE ( "Horizonte", STRING, "Días", INTEGER, { { "14 días", 14 }, { "30 días", 30 } } )
+

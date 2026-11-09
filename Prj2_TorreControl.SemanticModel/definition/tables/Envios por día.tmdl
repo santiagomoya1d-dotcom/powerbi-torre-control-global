@@ -1,0 +1,41 @@
+/// Un registro por envío y día en que está en tránsito a mediodía. Solo lo usa la curva del año: una consulta para los 365 días en vez de una por día.
+table 'Envios por día'
+	isHidden
+	lineageTag: f2885aa3-9df3-57ed-9a63-13c862df183d
+
+	column EnvioID
+		dataType: string
+		isHidden
+		lineageTag: a99fd3f5-3111-560e-a343-5c64ad38aaf7
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [EnvioID]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Fecha
+		dataType: dateTime
+		isHidden
+		formatString: dd/mm/yyyy
+		lineageTag: 1f4b74dd-f9f5-55d0-b6a3-e1a1a526b923
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Fecha]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Valor
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: a0ceb2a9-1161-518f-a296-0db0e9442bd0
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Valor]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Envios por día' = calculated
+		mode: import
+		source = VAR d0 = MIN ( Calendario[Fecha] ) VAR d1 = MAX ( Calendario[Fecha] ) RETURN SELECTCOLUMNS ( GENERATE ( SELECTCOLUMNS ( Envios, "@id", Envios[EnvioID], "@s", Envios[Salida], "@e", Envios[Entrega], "@v", Envios[Valor (€)] ), GENERATESERIES ( MAX ( CEILING ( [@s] - 0.5, 1 ), d0 ), MIN ( CEILING ( [@e] - 0.5, 1 ) - 1, d1 ), 1 ) ), "EnvioID", [@id], "Fecha", CONVERT ( [Value], DATETIME ), "Valor", [@v] )
+

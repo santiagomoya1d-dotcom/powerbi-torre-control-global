@@ -5,85 +5,128 @@ table Viajes
 	column ViajeID
 		dataType: string
 		lineageTag: b51632c0-ed9e-442a-8199-bd30cf928a43
+		summarizeBy: none
 		sourceColumn: ViajeID
+
+		annotation SummarizationSetBy = Automatic
 
 	column Escenario
 		dataType: string
 		isHidden
 		lineageTag: 81140c68-b414-41b2-8623-c4aad86daabb
+		summarizeBy: none
 		sourceColumn: Escenario
+
+		annotation SummarizationSetBy = Automatic
 
 	column Modo
 		dataType: string
 		isHidden
 		lineageTag: b81934ef-6bf9-44e5-8f95-d8e9b0cc13b7
+		summarizeBy: none
 		sourceColumn: Modo
+
+		annotation SummarizationSetBy = Automatic
 
 	column RutaID
 		dataType: string
 		isHidden
 		lineageTag: 8380724a-1ca9-47ca-8b90-591e5941cfe0
+		summarizeBy: none
 		sourceColumn: RutaID
+
+		annotation SummarizationSetBy = Automatic
 
 	column Vía
 		dataType: string
 		lineageTag: d650915a-a691-4d1f-a396-4792ae10b41f
+		summarizeBy: none
 		sourceColumn: Vía
+
+		annotation SummarizationSetBy = Automatic
 
 	column Origen
 		dataType: string
 		lineageTag: 7f899f02-235b-4258-aa91-a39c698c2e65
+		summarizeBy: none
 		sourceColumn: Origen
+
+		annotation SummarizationSetBy = Automatic
 
 	column Destino
 		dataType: string
 		lineageTag: 8dd1d4df-5a5d-4666-9be1-f0e43bf0499e
+		summarizeBy: none
 		sourceColumn: Destino
+
+		annotation SummarizationSetBy = Automatic
 
 	column Viaje
 		dataType: string
 		lineageTag: 6cddb979-0dd6-4e9e-9891-d89a047c1a9d
+		summarizeBy: none
 		sourceColumn: Viaje
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Origen nombre'
 		dataType: string
 		lineageTag: 16f111b0-38ba-4e73-8f11-86f7b27fc379
+		summarizeBy: none
 		sourceColumn: Origen nombre
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Destino nombre'
 		dataType: string
 		lineageTag: 90e21dbe-9bd1-45a7-86f4-d147ca854b68
+		summarizeBy: none
 		sourceColumn: Destino nombre
+
+		annotation SummarizationSetBy = Automatic
 
 	column Salida
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: 582e423c-c92e-4fc9-9b24-6af86372f96c
+		summarizeBy: none
 		sourceColumn: Salida
+
+		annotation SummarizationSetBy = Automatic
 
 	column Llegada
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: 5879acb7-1ff9-4314-8af9-11972f4a5efb
+		summarizeBy: none
 		sourceColumn: Llegada
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Fin de espera'
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: ee088505-1814-4b7c-ba6a-87aad68ed229
+		summarizeBy: none
 		sourceColumn: Fin de espera
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Días de tránsito'
 		dataType: double
 		lineageTag: 7eedf77b-f1a9-4fe5-825e-6a79ee291377
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Días de tránsito
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Días de espera'
 		dataType: double
 		lineageTag: 9ceeda05-f38f-4840-89de-876f67d66d3c
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Días de espera
+
+		annotation SummarizationSetBy = Automatic
 
 	partition Viajes = m
 		mode: import

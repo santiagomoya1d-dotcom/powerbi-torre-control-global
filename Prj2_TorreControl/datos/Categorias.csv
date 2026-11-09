@@ -1,8 +1,8 @@
 Categoría,Nombre corto,Color,Tono claro,Tono oscuro,Orden,Cobertura (días)
-Bebidas,Bebidas,#38BDF8,#93DDFD,#0284C7,1,10
-Alimentación,Alimentación,#F59E0B,#FCD38D,#B45309,2,14
-Droguería,Droguería,#22C55E,#9AF0B6,#15803D,3,18
-Higiene y belleza,Higiene,#EC4899,#F9B6D6,#BE185D,4,12
-Mascotas,Mascotas,#F97316,#FDC28E,#C2410C,5,15
-Bazar y hogar,Bazar,#8B5CF6,#C9BEFF,#6D28D9,6,25
-Temporada Navidad,Navidad,#EF4444,#FCA5A5,#B91C1C,7,20
+Bebidas,Bebidas,#8EC1EE,#D6E8F8,#2F6FA8,1,10
+Alimentación,Alimentación,#F2C14E,#FAE6B3,#9A6B00,2,14
+Droguería,Droguería,#8FD3B0,#D5F0E2,#2E7D57,3,18
+Higiene y belleza,Higiene,#F3A3C6,#FBDDEA,#A63A6B,4,12
+Mascotas,Mascotas,#F5A877,#FCDCC6,#A8531C,5,15
+Bazar y hogar,Bazar,#B8A5F0,#E3DBFA,#5B43B0,6,25
+Temporada Navidad,Navidad,#E8705E,#F8CDC6,#A3301F,7,20

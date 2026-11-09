@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "curvaTransito",
   "position": {
-    "x": 484,
-    "y": 918,
-    "z": 6000,
-    "width": 952,
-    "height": 124,
-    "tabOrder": 6000
+    "x": 124,
+    "y": 900,
+    "z": 3300,
+    "width": 424,
+    "height": 160,
+    "tabOrder": 3300
   },
   "visual": {
     "visualType": "lineChart",
@@ -42,10 +42,10 @@
                       "Entity": "Medidas"
                     }
                   },
-                  "Property": "Valor en tránsito (€)"
+                  "Property": "Tránsito diario (€)"
                 }
               },
-              "queryRef": "Medidas.Valor en tránsito (€)",
+              "queryRef": "Medidas.Tránsito diario (€)",
               "nativeQueryRef": "En el escenario elegido"
             },
             {
@@ -56,10 +56,10 @@
                       "Entity": "Medidas"
                     }
                   },
-                  "Property": "Valor en tránsito (Base)"
+                  "Property": "Tránsito diario (Base)"
                 }
               },
-              "queryRef": "Medidas.Valor en tránsito (Base)",
+              "queryRef": "Medidas.Tránsito diario (Base)",
               "nativeQueryRef": "Escenario Base"
             }
           ]
@@ -75,7 +75,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#F43F5E'"
+                      "Value": "'#161616'"
                     }
                   }
                 }
@@ -83,7 +83,7 @@
             }
           },
           "selector": {
-            "metadata": "Medidas.Valor en tránsito (€)"
+            "metadata": "Medidas.Tránsito diario (€)"
           }
         },
         {
@@ -93,7 +93,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#475569'"
+                      "Value": "'#CFE24F'"
                     }
                   }
                 }
@@ -101,7 +101,7 @@
             }
           },
           "selector": {
-            "metadata": "Medidas.Valor en tránsito (Base)"
+            "metadata": "Medidas.Tránsito diario (Base)"
           }
         }
       ],
@@ -133,7 +133,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#64748B'"
+                      "Value": "'#8A8F87'"
                     }
                   }
                 }
@@ -144,7 +144,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1E293B'"
+                      "Value": "'#E2E5DF'"
                     }
                   }
                 }
@@ -163,6 +163,20 @@
                   "Value": "false"
                 }
               }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Variable Display'', ''Segoe UI'', sans-serif'"
+                }
+              }
             }
           }
         }
@@ -175,7 +189,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#64748B'"
+                      "Value": "'#8A8F87'"
                     }
                   }
                 }
@@ -192,6 +206,20 @@
               "expr": {
                 "Literal": {
                   "Value": "false"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Variable Display'', ''Segoe UI'', sans-serif'"
                 }
               }
             }
@@ -220,7 +248,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#94A3B8'"
+                      "Value": "'#3B3D3A'"
                     }
                   }
                 }
@@ -229,7 +257,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "9D"
+                  "Value": "8D"
                 }
               }
             },
@@ -237,6 +265,13 @@
               "expr": {
                 "Literal": {
                   "Value": "false"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Variable Display'', ''Segoe UI'', sans-serif'"
                 }
               }
             }
@@ -251,7 +286,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#F7F8F5'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             }
@@ -264,7 +317,25 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#F7F8F5'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "28D"
                 }
               }
             }
@@ -303,28 +374,28 @@
             "top": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "14D"
                 }
               }
             },
             "bottom": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "14D"
                 }
               }
             },
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "14D"
                 }
               }
             },
             "right": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "14D"
                 }
               }
             }
@@ -337,7 +408,53 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Valor en tránsito en el año · pincha un día para viajar'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#161616'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Variable Display'', ''Segoe UI'', sans-serif'"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'left'"
                 }
               }
             }

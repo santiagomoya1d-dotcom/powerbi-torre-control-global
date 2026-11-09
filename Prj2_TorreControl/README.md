@@ -7,13 +7,13 @@ Piezas que generan el informe `../Prj2_TorreControl.pbip`. **Todos los datos son
 Desde esta carpeta, con Python 3.11 o posterior y `pandas` y `numpy`:
 
 ```
-python construir.py                     # datos (semilla fija: sale siempre lo mismo), globo y página
-python construir.py --sin-datos         # solo globo y página
+python construir.py                     # datos (semilla fija: sale siempre lo mismo), globo e informe
+python construir.py --sin-datos         # solo globo e informe
 python construir.py --config otra.json --prueba ../../prueba
                                         # otra red en una carpeta aparte, con banco.html para verla
 ```
 
-Después, en Power BI Desktop: «Actualizar» si cambiaron los datos y «Aplicar cambios externos» si cambió la página.
+Hazlo con Power BI Desktop cerrado. En el informe solo cambian la especificación del globo y el tema; las páginas, los botones y los marcadores se editan en Desktop. Después abre el informe y pulsa «Actualizar» si cambiaron los datos.
 
 ## La simulación
 
@@ -33,19 +33,22 @@ Resultado con la configuración de serie: 2.672 cargas al año por escenario (14
 
 ## Medidas clave
 
-- `Fecha elegida` y `Momento`: el día pinchado en la curva (o el de la tabla Torre) y su mediodía. Todo se calcula en ese instante.
+- `Fecha elegida` y `Momento`: el día pinchado en la curva o elegido en el calendario (o el de la tabla Torre) y su mediodía. Todo se calcula en ese instante.
 - `Valor en tránsito (€)`, `Envíos en tránsito`, `Buques en el mar`, `Vuelos en el aire`, `Camiones en ruta`: el estado de la red ese día.
 - `Puntualidad %`, `Retraso medio (días)`, `Flete (30 días)`: los últimos 30 días. `Retraso en tránsito (días)` anticipa lo que aún no ha llegado.
 - `… (Base)`: la misma medida en el escenario base, para las diferencias.
-- Grupo «5 · Globo»: una fila por viaje en ruta con posición, rumbo, estado y ficha. En blanco si ese día no se mueve.
-- `HTML · Cabecera`, `HTML · Indicadores`, `HTML · Alertas`, `HTML · Llegadas`, `HTML · Leyenda`: HTML, CSS y SVG animados para HTML Content.
+- Grupo «5 · Globo»: una fila por viaje en ruta con posición, rumbo, estado y ficha. En blanco si ese día no se mueve. `En foco` deja pasar solo los desviados cuando está pulsada la pastilla de la tarjeta del escenario.
+- `Tránsito diario (€)` y `(Base)`: la curva del año, leída de la tabla oculta `Envios por día` (un registro por envío y día en tránsito).
+- Grupo «6 · Tablas»: `En tránsito ahora`, `Días previstos` y `Días reales (60 d)`, para las tablas de las páginas Mar, Aire y Carretera.
+- Grupo «7 · HTML»: una medida por tarjeta (`Barra lateral`, `Cabecera`, `En tránsito`, `Exposición`, `Servicio`, `Escenario`, `Fichas`, `Vías`, `Alertas`, `Llegadas`, `Leyenda`), por panel (`Panel tránsito`, `Panel retraso`, `Panel exposición`, `Panel calendario`, `Panel ayuda`) y la barra y la cabecera de cada página de modo. Devuelven HTML, CSS y SVG para HTML Content; cada una lleva solo el CSS que usa. `HTML · Estilo` guarda la hoja completa.
 
 ## El globo
 
 `globo/construir_globo.py` genera una especificación Vega con:
 - **Proyección y controles:** proyección ortográfica, giro arrastrando, zoom con la rueda y botones de vista con giro animado.
-- **Esfera:** atmósfera y reflejo, y la noche en tres capas, centrada en el punto antisolar con la declinación del día.
-- **Rutas y red:** rutas por círculo máximo; las activas «fluyen». Las zonas de incidencia laten. Proveedores, puertos y pasos, con el faro del almacén.
-- **Viajes:** iconos de buque, avión y camión orientados según el rumbo y coloreados según el retraso.
+- **Esfera:** mar gris salvia y tierra blanca, aro de cristal, sombra en el suelo y reflejo, y la noche en tres capas, centrada en el punto antisolar con la declinación del día.
+- **Rutas y red:** rutas por círculo máximo; las activas llevan banda lima y cuentas. Las zonas de incidencia, en coral (cierre) y ámbar (congestión). Proveedores, puertos y pasos, con el haz del almacén. Los rótulos van en pastillas y cambian de lado si no caben.
+- **Viajes:** buques, aviones y camiones dibujados por piezas, orientados según el rumbo y con un halo según el retraso.
+- **Animación:** con `vista.animado` en `false` (de serie), las cuentas y los latidos quedan quietos y el globo solo se redibuja al girarlo, acercarlo o cambiar de vista.
 
 Los puntos de la cara oculta se esconden calculando su distancia angular al centro de la vista.

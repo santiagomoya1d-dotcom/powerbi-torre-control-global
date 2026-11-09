@@ -5,33 +5,53 @@ table Torre
 	column Nombre
 		dataType: string
 		lineageTag: a1395fbe-500d-49af-964d-c53cfd09dd90
+		summarizeBy: none
 		sourceColumn: Nombre
+
+		annotation SummarizationSetBy = Automatic
 
 	column Subtítulo
 		dataType: string
 		lineageTag: 0bd74bcc-20c1-4e6f-9ee2-e06ff19c1e05
+		summarizeBy: none
 		sourceColumn: Subtítulo
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Datos ficticios'
 		dataType: string
 		lineageTag: 9b92ee76-2e31-4031-97da-dd17b409f36e
+		summarizeBy: none
 		sourceColumn: Datos ficticios
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Fecha por defecto'
 		dataType: dateTime
 		formatString: dd/mm/yyyy
 		lineageTag: 85221767-3d2d-4768-af93-23176d092beb
+		summarizeBy: none
 		sourceColumn: Fecha por defecto
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Escenario por defecto'
 		dataType: string
 		lineageTag: c0bb8f89-6985-473c-9ded-210fd733ce51
+		summarizeBy: none
 		sourceColumn: Escenario por defecto
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Nota de la fecha'
 		dataType: string
 		lineageTag: cb1a5764-3071-4242-bbbe-b764459d9be5
+		summarizeBy: none
 		sourceColumn: Nota de la fecha
+
+		annotation SummarizationSetBy = Automatic
 
 	partition Torre = m
 		mode: import

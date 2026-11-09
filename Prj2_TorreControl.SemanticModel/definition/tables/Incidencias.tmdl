@@ -6,47 +6,72 @@ table Incidencias
 		dataType: string
 		isHidden
 		lineageTag: d6c90e41-966d-4146-9bb8-9c06904885f3
+		summarizeBy: none
 		sourceColumn: Escenario
+
+		annotation SummarizationSetBy = Automatic
 
 	column Incidencia
 		dataType: string
 		lineageTag: 6076c150-79e8-4d11-82e3-efab6a39dc10
+		summarizeBy: none
 		sourceColumn: Incidencia
+
+		annotation SummarizationSetBy = Automatic
 
 	column Tipo
 		dataType: string
 		lineageTag: 2f5c6226-de0a-43ca-8b3b-c5678cdb7685
+		summarizeBy: none
 		sourceColumn: Tipo
+
+		annotation SummarizationSetBy = Automatic
 
 	column Desde
 		dataType: dateTime
 		formatString: dd/mm/yyyy
 		lineageTag: de6083fe-941a-4dd9-97e6-97676c8ea074
+		summarizeBy: none
 		sourceColumn: Desde
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = Automatic
 
 	column Hasta
 		dataType: dateTime
 		formatString: dd/mm/yyyy
 		lineageTag: f693f89e-5a00-4085-9bc0-5048da4855e5
+		summarizeBy: none
 		sourceColumn: Hasta
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = Automatic
 
 	column Lon
 		dataType: double
 		lineageTag: a0a706c1-a38d-4f08-847e-f62c3eee88c9
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Lon
+
+		annotation SummarizationSetBy = Automatic
 
 	column Lat
 		dataType: double
 		lineageTag: 202a0dee-9a3b-420d-ada8-94c6515872b0
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Lat
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Radio (km)'
 		dataType: int64
 		lineageTag: 66e914ac-7c06-4dbd-bb3c-c874f65b75e9
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Radio (km)
+
+		annotation SummarizationSetBy = Automatic
 
 	partition Incidencias = m
 		mode: import

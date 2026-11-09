@@ -6,56 +6,89 @@ table Calendario
 		dataType: dateTime
 		formatString: dd/mm/yyyy
 		lineageTag: d3c7d68b-815c-4799-8d05-3b40fe183092
+		summarizeBy: none
 		sourceColumn: Fecha
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = Automatic
 
 	column Año
 		dataType: int64
 		lineageTag: cd501476-57cc-4670-bc18-1c2a2f55da70
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Año
+
+		annotation SummarizationSetBy = Automatic
 
 	column Mes
 		dataType: int64
 		isHidden
 		lineageTag: 7c1d9f3e-76eb-48ee-912c-f77594c57ae2
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Mes
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Nombre del mes'
 		dataType: string
 		lineageTag: 7aeb3ac6-583d-4c3a-925e-bedf4e9fd3c6
+		summarizeBy: none
 		sourceColumn: Nombre del mes
 		sortByColumn: Mes
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Mes corto'
 		dataType: string
 		lineageTag: 895ebeed-97ea-4ac6-b28f-919660605e22
+		summarizeBy: none
 		sourceColumn: Mes corto
 		sortByColumn: Mes
+
+		annotation SummarizationSetBy = Automatic
 
 	column Año-mes
 		dataType: int64
 		isHidden
 		lineageTag: 261d4659-2465-43c6-9298-0544a491f942
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Año-mes
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Mes y año'
 		dataType: string
 		lineageTag: c578f174-b3ad-4a7c-a63b-29c0befbda20
+		summarizeBy: none
 		sourceColumn: Mes y año
 		sortByColumn: Año-mes
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Semana ISO'
 		dataType: int64
 		lineageTag: 49d33fb2-832a-4407-81f9-79e5223e3869
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Semana ISO
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Día de la semana'
 		dataType: string
 		lineageTag: 0f1e3da8-7f55-4c15-b3d4-256ae2301576
+		summarizeBy: none
 		sourceColumn: Día de la semana
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Día del mes' = DAY ( Calendario[Fecha] )
+		dataType: int64
+		formatString: 0
+		lineageTag: 0e5becff-f407-5e5d-9646-d2850382c19f
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
 
 	partition Calendario = m
 		mode: import

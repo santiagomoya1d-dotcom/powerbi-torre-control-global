@@ -14,7 +14,7 @@
               "color": {
                 "expr": {
                   "Literal": {
-                    "Value": "'#04070F'"
+                    "Value": "'#ECEEEA'"
                   }
                 }
               }
@@ -24,33 +24,6 @@
             "expr": {
               "Literal": {
                 "Value": "0D"
-              }
-            }
-          },
-          "image": {
-            "image": {
-              "name": {
-                "expr": {
-                  "Literal": {
-                    "Value": "'FondoTorre.png'"
-                  }
-                }
-              },
-              "scaling": {
-                "expr": {
-                  "Literal": {
-                    "Value": "'Fit'"
-                  }
-                }
-              },
-              "url": {
-                "expr": {
-                  "ResourcePackageItem": {
-                    "PackageName": "RegisteredResources",
-                    "PackageType": 1,
-                    "ItemName": "FondoTorre.png"
-                  }
-                }
               }
             }
           }
@@ -65,7 +38,7 @@
               "color": {
                 "expr": {
                   "Literal": {
-                    "Value": "'#02040A'"
+                    "Value": "'#E3E6E0'"
                   }
                 }
               }
@@ -84,14 +57,24 @@
   },
   "visualInteractions": [
     {
-      "source": "barrasCategoria",
+      "source": "calMes",
       "target": "curvaTransito",
-      "type": "DataFilter"
+      "type": "NoFilter"
+    },
+    {
+      "source": "calDia",
+      "target": "curvaTransito",
+      "type": "NoFilter"
     },
     {
       "source": "curvaTransito",
-      "target": "barrasCategoria",
-      "type": "DataFilter"
+      "target": "calMes",
+      "type": "NoFilter"
+    },
+    {
+      "source": "curvaTransito",
+      "target": "calDia",
+      "type": "NoFilter"
     }
   ]
 }

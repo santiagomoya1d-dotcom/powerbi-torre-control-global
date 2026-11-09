@@ -5,122 +5,181 @@ table Envios
 	column EnvioID
 		dataType: string
 		lineageTag: 3e11d8d1-9095-46f8-9c08-fabab6b9e0d2
+		summarizeBy: none
 		sourceColumn: EnvioID
+
+		annotation SummarizationSetBy = Automatic
 
 	column Escenario
 		dataType: string
 		isHidden
 		lineageTag: 12d0b996-60a0-4fd5-be57-8446221170fd
+		summarizeBy: none
 		sourceColumn: Escenario
+
+		annotation SummarizationSetBy = Automatic
 
 	column ViajeID
 		dataType: string
 		isHidden
 		lineageTag: a17837a1-9356-4014-af52-312a2dbf607d
+		summarizeBy: none
 		sourceColumn: ViajeID
+
+		annotation SummarizationSetBy = Automatic
 
 	column ProveedorID
 		dataType: string
 		isHidden
 		lineageTag: 26022b4e-0ccd-49ad-8ed3-ea6879d0415c
+		summarizeBy: none
 		sourceColumn: ProveedorID
+
+		annotation SummarizationSetBy = Automatic
 
 	column Categoría
 		dataType: string
 		isHidden
 		lineageTag: fa6a2981-0bc4-4b99-8d78-c332e71d3510
+		summarizeBy: none
 		sourceColumn: Categoría
+
+		annotation SummarizationSetBy = Automatic
 
 	column Modo
 		dataType: string
 		lineageTag: 0b41f86d-40f9-4773-89c3-c83ad34f9ad2
+		summarizeBy: none
 		sourceColumn: Modo
+
+		annotation SummarizationSetBy = Automatic
 
 	column Vía
 		dataType: string
 		lineageTag: e0969d5c-53bd-48ca-bcdd-315c0b02baa8
+		summarizeBy: none
 		sourceColumn: Vía
+
+		annotation SummarizationSetBy = Automatic
 
 	column RutaID
 		dataType: string
 		isHidden
 		lineageTag: b2b2a9a8-9f4a-4849-965d-cd947816a7c7
+		summarizeBy: none
 		sourceColumn: RutaID
+
+		annotation SummarizationSetBy = Automatic
 
 	column Origen
 		dataType: string
 		lineageTag: 6d75d045-085f-42f0-93bb-c0e076bd3c94
+		summarizeBy: none
 		sourceColumn: Origen
+
+		annotation SummarizationSetBy = Automatic
 
 	column Destino
 		dataType: string
 		lineageTag: e1c9a50e-89e8-486b-8f4c-aff7dba21188
+		summarizeBy: none
 		sourceColumn: Destino
+
+		annotation SummarizationSetBy = Automatic
 
 	column PO
 		dataType: string
 		lineageTag: 157f1bd6-2258-4d78-a7d6-7fdebbafbcc9
+		summarizeBy: none
 		sourceColumn: PO
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Fecha pedido'
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: f78663e9-8128-48e7-a11d-3a06456138a9
+		summarizeBy: none
 		sourceColumn: Fecha pedido
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Listo en origen'
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: 6670f8ae-bea3-4fc2-80c3-821cffa9129f
+		summarizeBy: none
 		sourceColumn: Listo en origen
+
+		annotation SummarizationSetBy = Automatic
 
 	column Salida
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: 1bb48e13-625a-4603-8ed8-aa06aa79e009
+		summarizeBy: none
 		sourceColumn: Salida
+
+		annotation SummarizationSetBy = Automatic
 
 	column Llegada
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: 8a65367d-b1be-4c92-a179-24165da13342
+		summarizeBy: none
 		sourceColumn: Llegada
+
+		annotation SummarizationSetBy = Automatic
 
 	column Entrega
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: 6b537368-f705-4748-9d96-c60924bc7d85
+		summarizeBy: none
 		sourceColumn: Entrega
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Entrega prevista'
 		dataType: dateTime
 		formatString: dd/mm/yyyy hh:nn
 		lineageTag: 492b2b48-13c3-4a36-a7e1-813047c8ff31
+		summarizeBy: none
 		sourceColumn: Entrega prevista
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Retraso (días)'
 		dataType: double
 		lineageTag: 5721a0a9-951e-4c20-9a7d-d8eb8bc01e0a
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Retraso (días)
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Valor (€)'
 		dataType: int64
 		lineageTag: 204d4b20-c355-4406-9057-c2ab9a8d3bf4
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Valor (€)
+
+		annotation SummarizationSetBy = Automatic
 
 	column 'Flete (€)'
 		dataType: int64
 		lineageTag: bcdc06b2-b1d8-41e6-9c0e-ff50dcd14909
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Flete (€)
+
+		annotation SummarizationSetBy = Automatic
 
 	column Palets
 		dataType: int64
 		lineageTag: a5d863fd-9c41-4a95-8eee-f798b7d5f6a5
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Palets
+
+		annotation SummarizationSetBy = Automatic
 
 	partition Envios = m
 		mode: import

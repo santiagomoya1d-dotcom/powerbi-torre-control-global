@@ -1,0 +1,59 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "displayName": "Aire · calendario",
+  "name": "bmPanelCalendario_aire",
+  "options": {
+    "applyOnlyToTargetVisuals": true,
+    "targetVisualNames": [
+      "panelAyuda_aire",
+      "panelCalendario_aire",
+      "calMes_aire",
+      "calDia_aire",
+      "btnCerrarPanel_aire"
+    ],
+    "suppressData": true
+  },
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "aire",
+    "sections": {
+      "aire": {
+        "visualContainers": {
+          "panelAyuda_aire": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "panelCalendario_aire": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {}
+            }
+          },
+          "calMes_aire": {
+            "singleVisual": {
+              "visualType": "advancedSlicerVisual",
+              "objects": {}
+            }
+          },
+          "calDia_aire": {
+            "singleVisual": {
+              "visualType": "advancedSlicerVisual",
+              "objects": {}
+            }
+          },
+          "btnCerrarPanel_aire": {
+            "singleVisual": {
+              "visualType": "actionButton",
+              "objects": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

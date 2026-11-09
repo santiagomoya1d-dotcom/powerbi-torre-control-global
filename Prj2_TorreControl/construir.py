@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 Construye todo a partir de red.config.json, en orden, y para en el primer fallo:
-datos (simulación de los escenarios) → globo (Vega) → página del informe (PBIR).
+datos (simulación de los escenarios) → globo (Vega) → informe (PBIR: el globo y el tema).
 
 Uso:
   python construir.py                 simula el año con la configuración y lo monta todo
-  python construir.py --sin-datos     solo globo y página (cambios de aspecto)
+  python construir.py --sin-datos     solo globo e informe (cambios de aspecto)
   python construir.py --config otra.json --prueba CARPETA
                                       variante de prueba: datos, globo y banco.html en CARPETA,
                                       sin tocar datos/ ni el informe
-Después, en Power BI Desktop: «Actualizar» (si cambiaron los datos) y «Aplicar cambios externos».
+Lánzalo con Power BI Desktop cerrado. Después abre el .pbip y pulsa «Actualizar» si cambiaron los datos.
 """
 from __future__ import annotations
 
@@ -54,8 +54,8 @@ def main() -> None:
         print(f"\nVariante lista en {prueba}. Ábrela con: python -m http.server --directory \"{prueba}\" "
               "y luego http://localhost:8000/banco.html")
     else:
-        paso("Página del informe", "generador/pagina_torre.py", *cfg)
-        print("\nListo. En Power BI Desktop: «Actualizar» si cambiaron los datos y «Aplicar cambios externos».")
+        paso("Informe (globo y tema)", "generador/pagina_torre.py", *cfg)
+        print("\nListo. Abre el .pbip en Power BI Desktop y pulsa «Actualizar» si cambiaron los datos.")
 
 
 if __name__ == "__main__":

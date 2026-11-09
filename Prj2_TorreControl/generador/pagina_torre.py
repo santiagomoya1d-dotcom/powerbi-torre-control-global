@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Escribe la página «Torre de control» del informe en formato PBIR (archivos de texto del proyecto PBIP).
+Lleva al informe (PBIR) lo que sale de la configuración: la especificación del globo y el tema.
 
 Uso:     python generador/pagina_torre.py [--config otra.config.json] [--proyecto "<carpeta con Prj2_TorreControl.Report>"]
-Después: en Power BI Desktop, «Aplicar cambios externos» (o cerrar y abrir el .pbip).
+         python generador/pagina_torre.py --nueva     rehace la página «Torre de control» base desde cero
+Lánzalo con Power BI Desktop cerrado y ábrelo después: Desktop no recoge lo que cambie en los archivos mientras está abierto.
+
+Si la página ya existe, solo cambia la especificación Vega del objeto visual del globo y registra el tema: los
+botones, los paneles, los marcadores y las páginas Mar, Aire y Carretera se diseñaron en Power BI Desktop y no
+se tocan. Con --nueva escribe la página base (tarjetas, globo, segmentadores y curva) sin botones ni paneles: los
+marcadores que apuntan a ellos dejarían de funcionar.
 
 Lee de los archivos que ya guardó Power BI las versiones de esquema y los identificadores de
 Deneb y HTML Content, para escribir lo mismo que escribiría Desktop.
@@ -20,14 +26,17 @@ RAIZ = Path(__file__).resolve().parent.parent          # carpeta Prj2_TorreContr
 _p = argumentos("Escribe la página «Torre de control» del informe (PBIR).")
 _p.add_argument("--proyecto", help="carpeta que contiene Prj2_TorreControl.Report (por defecto, la raíz del repositorio)")
 _p.add_argument("--escena", help="especificación Vega (por defecto, globo/torre_globo.vega.json)")
+_p.add_argument("--nueva", action="store_true", help="rehacer la página base desde cero (se pierden botones y paneles)")
 ARGS = _p.parse_args()
 CFG = cargar(ARGS.config)
 PROYECTO = Path(ARGS.proyecto) if ARGS.proyecto else next(c for c in (RAIZ, RAIZ.parent) if any(c.glob("*.Report")))
 INFORME = next(PROYECTO.glob("*.Report"))
 DEF = INFORME / "definition"
 PAGINA = "torre"
-TEMA = "TemaTorreOscuro.json"
-FONDO = "FondoTorre.png"
+TEMA = "TemaTorreClaro.json"
+ANTIGUOS = ("TemaTorreOscuro.json", "FondoTorre.png")   # recursos del diseño oscuro anterior
+LETRA = "'Segoe UI Variable Display', 'Segoe UI', sans-serif"
+TINTA, LIMA, PAPEL, TARJETA, LINEA, GRIS = "#161616", "#CFE24F", "#ECEEEA", "#F7F8F5", "#E2E5DF", "#8A8F87"
 ESQ = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition"
 
 
@@ -80,15 +89,23 @@ def proy(campo: dict, nombre_corto: str | None = None):
     return {"field": campo, "queryRef": f"{tabla}.{prop}", "nativeQueryRef": nombre_corto or prop}
 
 
-def contenedor():
-    return {
+def contenedor(fondo: str | None = None, radio: int = 0, titulo: str | None = None, relleno: int = 0):
+    """Marco del objeto visual: sin nada, o como tarjeta redondeada (fondo y borde del mismo color) con título."""
+    c = {
         "background": [{"properties": {"show": lit("false")}}],
         "border": [{"properties": {"show": lit("false")}}],
         "dropShadow": [{"properties": {"show": lit("false")}}],
         "visualHeader": [{"properties": {"show": lit("false")}}],
-        "padding": [{"properties": {k: lit("0D") for k in ("top", "bottom", "left", "right")}}],
+        "padding": [{"properties": {k: lit(f"{relleno}D") for k in ("top", "bottom", "left", "right")}}],
         "title": [{"properties": {"show": lit("false")}}],
     }
+    if fondo:
+        c["background"] = [{"properties": {"show": lit("true"), "color": color(fondo), "transparency": lit("0D")}}]
+        c["border"] = [{"properties": {"show": lit("true"), "color": color(fondo), "radius": lit(f"{radio}D")}}]
+    if titulo:
+        c["title"] = [{"properties": {"show": lit("true"), "text": texto(titulo), "fontColor": color(TINTA), "fontSize": lit("12D"),
+                                      "fontFamily": texto(LETRA), "bold": lit("true"), "alignment": texto("left")}}]
+    return c
 
 
 def visual(nombre: str, x, y, ancho, alto, z, cuerpo: dict, filtros: dict | None = None) -> dict:
@@ -140,7 +157,7 @@ MEDIDAS_GLOBO = ["Lon hoy", "Lat hoy", "Lon siguiente hoy", "Lat siguiente hoy",
                  "Categorías del viaje", "Llegada prevista del viaje", "Fecha del globo", "Escenario del globo"]
 
 
-def deneb(nombre, x, y, ancho, alto, z, guid, spec: str):
+def deneb(nombre, x, y, ancho, alto, z, guid, spec: str, fondo: str | None = None, radio: int = 0):
     campos = [col("Viajes", c) for c in CAMPOS_GLOBO] + [med("Medidas", m) for m in MEDIDAS_GLOBO]
     return visual(nombre, x, y, ancho, alto, z, {
         "visualType": guid,
@@ -149,13 +166,13 @@ def deneb(nombre, x, y, ancho, alto, z, guid, spec: str):
             "provider": texto("vega"), "jsonSpec": texto(spec), "jsonConfig": texto("{}"), "renderMode": texto("canvas"),
             "enableTooltips": lit("true"), "enableContextMenu": lit("true"), "enableSelection": lit("false"),
             "enableHighlight": lit("false")}}]},
-        "visualContainerObjects": contenedor(),
+        "visualContainerObjects": contenedor(fondo, radio),
         "drillFilterOtherVisuals": True,
     })
 
 
-def botonera(nombre, x, y, ancho, alto, z, tabla, campo, valor_literal, columnas, unica=True, letra=11):
-    """Segmentador de botones (fichas redondeadas, una fila) con estilo propio para la opción elegida."""
+def botonera(nombre, x, y, ancho, alto, z, tabla, campo, valor_literal, columnas, unica=True, letra=12):
+    """Segmentador de botones en pastillas (una fila): blancas con borde fino; la elegida, negra con letra blanca."""
     def por_estado(normal, elegido, encima=None):
         filas = [{"properties": normal, "selector": {"id": "default"}},
                  {"properties": elegido, "selector": {"id": "selection:selected"}}]
@@ -169,17 +186,18 @@ def botonera(nombre, x, y, ancho, alto, z, tabla, campo, valor_literal, columnas
                                       "selectAllCheckboxEnabled": lit("false")}}],
         "layout": [{"properties": {"style": texto("Cards"), "orientation": lit("2L"), "rowCount": lit("1L"),
                                    "columnCount": lit(f"{columnas}L"), "autoGrid": lit("false"),
-                                   "cellPadding": lit("4L"), "maxTiles": lit(f"{columnas}L")}}],
-        "shapeCustomRectangle": [{"properties": {"tileShape": texto("rectangleRoundedByPixel"), "rectangleRoundedCurve": lit("8L")}}],
-        "fillCustom": por_estado({"show": lit("true"), "fillColor": color("#0C1322"), "transparency": lit("0D")},
-                                 {"show": lit("true"), "fillColor": color("#2DD4BF"), "transparency": lit("0D")},
-                                 {"show": lit("true"), "fillColor": color("#16233B"), "transparency": lit("0D")}),
-        "outline": por_estado({"show": lit("true"), "lineColor": color("#22324D"), "weight": lit("1D"), "transparency": lit("0D")},
-                              {"show": lit("true"), "lineColor": color("#5EEAD4"), "weight": lit("1D"), "transparency": lit("0D")}),
-        "value": por_estado({"show": lit("true"), "fontColor": color("#94A3B8"), "fontSize": lit(f"{letra}D"),
-                             "fontFamily": texto("Segoe UI Semibold"), "horizontalAlignment": texto("center")},
-                            {"show": lit("true"), "fontColor": color("#04211D"), "fontSize": lit(f"{letra}D"),
-                             "fontFamily": texto("Segoe UI Semibold"), "horizontalAlignment": texto("center")}),
+                                   "cellPadding": lit("3L"), "maxTiles": lit(f"{columnas}L")}}],
+        "shapeCustomRectangle": [{"properties": {"tileShape": texto("rectangleRoundedByPixel"),
+                                                 "rectangleRoundedCurve": lit(f"{max(alto // 2 - 4, 8)}L")}}],
+        "fillCustom": por_estado({"show": lit("true"), "fillColor": color("#FFFFFF"), "transparency": lit("0D")},
+                                 {"show": lit("true"), "fillColor": color(TINTA), "transparency": lit("0D")},
+                                 {"show": lit("true"), "fillColor": color(TARJETA), "transparency": lit("0D")}),
+        "outline": por_estado({"show": lit("true"), "lineColor": color(LINEA), "weight": lit("1D"), "transparency": lit("0D")},
+                              {"show": lit("true"), "lineColor": color(TINTA), "weight": lit("1D"), "transparency": lit("0D")}),
+        "value": por_estado({"show": lit("true"), "fontColor": color(TINTA), "fontSize": lit(f"{letra}D"),
+                             "fontFamily": texto(LETRA), "horizontalAlignment": texto("center")},
+                            {"show": lit("true"), "fontColor": color("#FFFFFF"), "fontSize": lit(f"{letra}D"),
+                             "fontFamily": texto(LETRA), "horizontalAlignment": texto("center")}),
         "glowCustom": [{"properties": {"show": lit("false")}}],
         "label": [{"properties": {"show": lit("false")}}],
     }
@@ -203,51 +221,31 @@ def curva(nombre, x, y, ancho, alto, z):
             "Y": {"projections": [proy(med("Medidas", escenario), "En el escenario elegido"), proy(med("Medidas", base), "Escenario Base")]},
         }},
         "objects": {
-            "dataPoint": [{"properties": {"fill": color("#F43F5E")}, "selector": {"metadata": f"Medidas.{escenario}"}},
-                          {"properties": {"fill": color("#475569")}, "selector": {"metadata": f"Medidas.{base}"}}],
+            "dataPoint": [{"properties": {"fill": color(TINTA)}, "selector": {"metadata": f"Medidas.{escenario}"}},
+                          {"properties": {"fill": color(LIMA)}, "selector": {"metadata": f"Medidas.{base}"}}],
             "lineStyles": [{"properties": {"strokeWidth": lit("2D")}}],
-            "valueAxis": [{"properties": {"gridlineShow": lit("true"), "labelColor": color("#64748B"), "gridlineColor": color("#1E293B"),
-                                          "labelDisplayUnits": lit("1000000D"), "showAxisTitle": lit("false")}}],
-            "categoryAxis": [{"properties": {"labelColor": color("#64748B"), "showAxisTitle": lit("false"), "gridlineShow": lit("false")}}],
-            "legend": [{"properties": {"show": lit("true"), "position": texto("TopRight"), "labelColor": color("#94A3B8"),
-                                       "fontSize": lit("9D"), "showTitle": lit("false")}}],
+            "valueAxis": [{"properties": {"gridlineShow": lit("true"), "labelColor": color(GRIS), "gridlineColor": color(LINEA),
+                                          "labelDisplayUnits": lit("1000000D"), "showAxisTitle": lit("false"), "fontSize": lit("8D"),
+                                          "fontFamily": texto(LETRA)}}],
+            "categoryAxis": [{"properties": {"labelColor": color(GRIS), "showAxisTitle": lit("false"), "gridlineShow": lit("false"),
+                                             "fontSize": lit("8D"), "fontFamily": texto(LETRA)}}],
+            "legend": [{"properties": {"show": lit("true"), "position": texto("TopRight"), "labelColor": color("#3B3D3A"),
+                                       "fontSize": lit("8D"), "showTitle": lit("false"), "fontFamily": texto(LETRA)}}],
         },
-        "visualContainerObjects": contenedor(),
-        "drillFilterOtherVisuals": True,
-    })
-
-
-def barras(nombre, x, y, ancho, alto, z):
-    colores = [{"properties": {"fill": {"solid": {"color": {"expr": med("Medidas", "Color de categoría")}}}},
-                "selector": {"data": [{"dataViewWildcard": {"matchingOption": 1}}]}}]
-    return visual(nombre, x, y, ancho, alto, z, {
-        "visualType": "clusteredBarChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [proy(col("Categorías", "Categoría")) | {"active": True}]},
-                "Y": {"projections": [proy(med("Medidas", "Valor en tránsito (€)"))]},
-            },
-            "sortDefinition": {"sort": [{"field": med("Medidas", "Valor en tránsito (€)"), "direction": "Descending"}], "isDefaultSort": True},
-        },
-        "objects": {
-            "dataPoint": colores,
-            "labels": [{"properties": {"show": lit("true"), "color": color("#E2E8F0"), "fontSize": lit("9D"),
-                                       "labelDisplayUnits": lit("1000000D"), "labelPrecision": lit("1L")}}],
-            "valueAxis": [{"properties": {"show": lit("false"), "gridlineShow": lit("false")}}],
-            "categoryAxis": [{"properties": {"labelColor": color("#CBD5E1"), "fontSize": lit("10D"), "showAxisTitle": lit("false")}}],
-        },
-        "visualContainerObjects": contenedor(),
+        "visualContainerObjects": contenedor(TARJETA, 28, "Valor en tránsito en el año · pincha un día para viajar", 14),
         "drillFilterOtherVisuals": True,
     })
 
 
 # ------------------------------------------------------------------------ tema y fondo
-def registrar_recursos() -> bool:
+def registrar_recursos() -> None:
     rep_path = DEF / "report.json"
     rep = leer(rep_path)
     carpeta = INFORME / "StaticResources" / "RegisteredResources"
     carpeta.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(RAIZ / "informe" / TEMA, carpeta / TEMA)
+    for viejo in ANTIGUOS:
+        (carpeta / viejo).unlink(missing_ok=True)
     tc = rep.setdefault("themeCollection", {})
     tc["customTheme"] = {"name": TEMA, "reportVersionAtImport": tc.get("baseTheme", {}).get("reportVersionAtImport", "5.66"),
                          "type": "RegisteredResources"}
@@ -256,14 +254,9 @@ def registrar_recursos() -> bool:
     if reg is None:
         reg = {"name": "RegisteredResources", "type": "RegisteredResources", "items": []}
         paquetes.append(reg)
-    reg["items"] = [i for i in reg.get("items", []) if i.get("name") not in (TEMA, FONDO)]
+    reg["items"] = [i for i in reg.get("items", []) if i.get("name") not in (TEMA, *ANTIGUOS)]
     reg["items"].append({"name": TEMA, "path": TEMA, "type": "CustomTheme"})
-    hay_fondo = (RAIZ / "informe" / FONDO).exists()
-    if hay_fondo:   # diseñado en Figma (archivo «Torre de control · Power BI»)
-        shutil.copyfile(RAIZ / "informe" / FONDO, carpeta / FONDO)
-        reg["items"].append({"name": FONDO, "path": FONDO, "type": "Image"})
     escribir(rep_path, rep)
-    return hay_fondo
 
 
 # --------------------------------------------------------------------- página
@@ -272,9 +265,18 @@ def main() -> None:
     g_html = identificador("htmlContent")
     ruta_escena = Path(ARGS.escena) if ARGS.escena else RAIZ / "globo" / "torre_globo.vega.json"
     spec = json.dumps(json.loads(ruta_escena.read_text(encoding="utf-8")), ensure_ascii=False, separators=(",", ":"))
-    hay_fondo = registrar_recursos()
+    registrar_recursos()
 
     paginas = DEF / "pages"
+    if (paginas / PAGINA).exists() and not ARGS.nueva:
+        for f in (paginas / PAGINA / "visuals").glob("*/visual.json"):
+            v = leer(f)
+            if v.get("visual", {}).get("visualType") == g_deneb:
+                v["visual"]["objects"]["vega"][0]["properties"]["jsonSpec"] = texto(spec)
+                escribir(f, v)
+                print(f"Globo actualizado en {f.parent.name} y tema registrado; el resto de la página no se toca.")
+                return
+        raise SystemExit("La página «torre» existe pero no encuentro el globo (Deneb). Usa --nueva para rehacerla.")
     meta_path = paginas / "pages.json"
     meta = leer(meta_path) if meta_path.exists() else {"$schema": f"{ESQ}/pagesMetadata/1.1.0/schema.json"}
     orden = [p for p in meta.get("pageOrder", []) if p != PAGINA]
@@ -286,43 +288,40 @@ def main() -> None:
     dir_pag = paginas / PAGINA
     if dir_pag.exists():
         shutil.rmtree(dir_pag)
-    fondo = {"color": color("#04070F"), "transparency": lit("0D")}
-    if hay_fondo:
-        fondo["image"] = {"image": {"name": texto(FONDO), "scaling": texto("Fit"),
-                                    "url": {"expr": {"ResourcePackageItem": {"PackageName": "RegisteredResources", "PackageType": 1, "ItemName": FONDO}}}}}
     escribir(dir_pag / "page.json", {
         "$schema": esquema("page", "page/2.1.0"), "name": PAGINA, "displayName": "Torre de control",
         "displayOption": "FitToPage", "height": 1080, "width": 1920,
-        "objects": {"background": [{"properties": fondo}],
-                    "outspace": [{"properties": {"color": color("#02040A"), "transparency": lit("0D")}}]},
-        "visualInteractions": [
-            {"source": "barrasCategoria", "target": "curvaTransito", "type": "DataFilter"},
-            {"source": "curvaTransito", "target": "barrasCategoria", "type": "DataFilter"},
-        ],
+        "objects": {"background": [{"properties": {"color": color(PAPEL), "transparency": lit("0D")}}],
+                    "outspace": [{"properties": {"color": color("#E3E6E0"), "transparency": lit("0D")}}]},
     })
     esc_def = CFG["torre"]["escenario_por_defecto"].replace("'", "''")
     n_esc = len(CFG.escenarios)
-    # Rejilla del fondo diseñado en Figma: columna izquierda (32 · 420), escenario del globo (476 · 968) y
-    # columna derecha (1468 · 420). Los rótulos ESCENARIO, MODO y los de la curva y las barras están en el fondo.
+    # Rejilla de 1920 × 1080 (estilo claro): barra lateral negra (20 · 76); columna izquierda de indicadores (124 · 424);
+    # globo y llegadas en el centro (564 · 896); escenario, fichas y riesgo a la derecha (1476 · 424). 16 px entre tarjetas.
     objetos = [
-        html("cabecera", 104, 20, 1784, 64, 1000, "HTML · Cabecera", g_html),
-        botonera("selectorEscenario", 138, 110, 306, 40, 2000, "Escenarios", "Escenario", f"'{esc_def}'", n_esc),
-        html("indicadores", 32, 172, 420, 876, 3000, "HTML · Indicadores", g_html),
-        botonera("selectorModo", 552, 110, 330, 40, 4000, "Modos", "Modo", None, 3, unica=False),
-        deneb("globo", 476, 156, 968, 704, 5000, g_deneb, spec),
-        html("leyenda", 476, 862, 968, 24, 5500, "HTML · Leyenda", g_html),
-        curva("curvaTransito", 484, 918, 952, 124, 6000),
-        html("alertas", 1468, 100, 420, 452, 7000, "HTML · Alertas", g_html),
-        html("llegadas", 1468, 566, 420, 196, 8000, "HTML · Llegadas", g_html),
-        barras("barrasCategoria", 1476, 810, 404, 230, 9000),
+        html("barraLateral", 20, 20, 76, 1040, 500, "HTML · Barra lateral", g_html),
+        html("cabecera", 124, 20, 1416, 112, 1000, "HTML · Cabecera", g_html),
+        botonera("selectorEscenario", 1556, 40, 344, 52, 2000, "Escenarios", "Escenario", f"'{esc_def}'", n_esc, letra=13),
+        botonera("selectorCategoria", 124, 144, 952, 40, 2500, "Categorías", "Categoría", None, len(CFG.categorias), unica=False),
+        botonera("selectorModo", 1092, 144, 368, 40, 2600, "Modos", "Modo", None, 3, unica=False),
+        html("kpiTransito", 124, 200, 424, 248, 3000, "HTML · En tránsito", g_html),
+        html("kpiExposicion", 124, 464, 424, 210, 3100, "HTML · Exposición", g_html),
+        html("kpiServicio", 124, 690, 424, 194, 3200, "HTML · Servicio", g_html),
+        curva("curvaTransito", 124, 900, 424, 160, 3300),
+        deneb("globo", 564, 200, 896, 596, 5000, g_deneb, spec, TARJETA, 28),
+        html("vias", 580, 262, 220, 430, 5400, "HTML · Vías", g_html),
+        html("leyenda", 580, 752, 864, 34, 5500, "HTML · Leyenda", g_html),
+        html("llegadas", 564, 812, 896, 248, 6000, "HTML · Llegadas", g_html),
+        html("escenario", 1476, 144, 424, 248, 7000, "HTML · Escenario", g_html),
+        html("fichas", 1476, 408, 424, 124, 7100, "HTML · Fichas", g_html),
+        html("alertas", 1476, 548, 424, 512, 7200, "HTML · Alertas", g_html),
     ]
     for v in objetos:
         escribir(dir_pag / "visuals" / v["name"] / "visual.json", v)
     meta["pageOrder"] = [PAGINA] + orden
     meta["activePageName"] = PAGINA
     escribir(meta_path, meta)
-    print(f"Página escrita con {len(objetos)} objetos visuales{' y fondo' if hay_fondo else ' (sin fondo todavía)'}. "
-          f"Deneb={g_deneb} HTML={g_html}")
+    print(f"Página escrita con {len(objetos)} objetos visuales. Deneb={g_deneb} HTML={g_html}")
 
 
 if __name__ == "__main__":

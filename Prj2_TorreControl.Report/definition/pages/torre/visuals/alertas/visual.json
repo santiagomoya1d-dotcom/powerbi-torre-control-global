@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "alertas",
   "position": {
-    "x": 1468,
-    "y": 100,
-    "z": 7000,
-    "width": 420,
-    "height": 452,
-    "tabOrder": 7000
+    "x": 1476,
+    "y": 548,
+    "z": 7200,
+    "width": 424,
+    "height": 512,
+    "tabOrder": 7200
   },
   "visual": {
     "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",

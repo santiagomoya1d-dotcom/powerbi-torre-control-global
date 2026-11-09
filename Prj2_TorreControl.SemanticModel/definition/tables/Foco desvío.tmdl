@@ -1,0 +1,17 @@
+/// Pastilla de la tarjeta del escenario: pulsada, el globo enseña solo los viajes por la ruta alternativa.
+table 'Foco desvío'
+	lineageTag: fdac0d3c-208d-59de-9b07-bcac16571b5d
+
+	column 'Foco desvío'
+		dataType: string
+		lineageTag: f9015b5a-a8b3-55f5-a8bc-6d8a994441b7
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Foco desvío]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Foco desvío' = calculated
+		mode: import
+		source = DATATABLE ( "Foco desvío", STRING, { { "Solo desviadas" } } )
+

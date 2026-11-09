@@ -2,14 +2,23 @@
 table Medidas
 	lineageTag: f91c8cde-e3db-5959-84b5-0048006e16fa
 
-	/// Día que se está viendo: el que se pincha en la curva o, si no hay ninguno, el de la tabla Torre (red.config.json).
+	/// Día que se está viendo: el que se pincha en la curva o se elige en el calendario; si no hay ninguno, el de la tabla Torre (red.config.json). Con solo el día elegido, ese día del mes por defecto; con solo el mes, el mismo día de ese mes.
 	measure 'Fecha elegida' =
-			IF (
-			    HASONEVALUE ( Calendario[Fecha] ),
-			    VALUES ( Calendario[Fecha] ),
+			VAR d0 =
 			    VAR d = MAX ( Torre[Fecha por defecto] )
 			    RETURN IF ( NOT ISBLANK ( d ), d, CALCULATE ( MAX ( Calendario[Fecha] ), REMOVEFILTERS ( Calendario ) ) )
-			)
+			VAR cand = VALUES ( Calendario[Fecha] )
+			VAR n = COUNTROWS ( cand )
+			VAR r =
+			    SWITCH (
+			        TRUE (),
+			        n = 1, MAXX ( cand, Calendario[Fecha] ),
+			        n = 0 || NOT ISFILTERED ( Calendario ), d0,
+			        ISFILTERED ( Calendario[Día del mes] ),
+			            MAXX ( FILTER ( cand, YEAR ( Calendario[Fecha] ) = YEAR ( d0 ) && MONTH ( Calendario[Fecha] ) = MONTH ( d0 ) ), Calendario[Fecha] ),
+			        MAXX ( FILTER ( cand, DAY ( Calendario[Fecha] ) <= DAY ( d0 ) ), Calendario[Fecha] )
+			    )
+			RETURN COALESCE ( r, d0 )
 		formatString: dd/mm/yyyy
 		displayFolder: 1 · Momento
 		lineageTag: 8921af8d-2e4b-546d-aefb-1f65ac3a1fc5
@@ -259,246 +268,186 @@ table Medidas
 		displayFolder: 6 · Colores
 		lineageTag: 8644baa2-66ad-515c-8481-4944609b79d0
 
+	/// Título de la página, día que se está viendo y aviso de datos ficticios.
 	measure 'HTML · Cabecera' =
 			VAR nombre = COALESCE ( SELECTEDVALUE ( Torre[Nombre] ), "Torre de control" )
-			VAR sub = SELECTEDVALUE ( Torre[Subtítulo] )
 			VAR ficticios = SELECTEDVALUE ( Torre[Datos ficticios] ) = "Sí"
 			VAR esc = [Escenario elegido]
-			VAR esBase = esc = "Base"
 			VAR descEsc = LOOKUPVALUE ( Escenarios[Descripción], Escenarios[Escenario], esc )
+			VAR nota = IF ( NOT ISFILTERED ( Calendario ) && esc = MAX ( Torre[Escenario por defecto] ), SELECTEDVALUE ( Torre[Nota de la fecha] ) )
+			VAR sub = IF ( nota <> "", nota, descEsc )
+			VAR fecha = FORMAT ( [Fecha elegida], "dddd, d ""de"" mmmm ""de"" yyyy", "es-ES" )
 			RETURN
-			    "<style>"
-			        & ".cab{font-family:'Segoe UI',sans-serif;color:#E2E8F0;display:flex;align-items:center;justify-content:space-between;height:64px}"
-			        & ".cab .n{font-size:24px;font-weight:700;letter-spacing:-0.01em}.cab .n span{color:#64748B;font-weight:600}"
-			        & ".cab .s{font-size:14px;color:#94A3B8;margin-top:3px}.cab .s::first-letter{text-transform:uppercase}"
-			        & ".cab .pill{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.12em;border-radius:999px;padding:7px 14px;margin-left:10px;background:rgba(12,19,34,.6)}"
-			        & ".cab .esc{color:#FDA4AF;border:1px solid rgba(244,63,94,.5)}.cab .base{color:#5EEAD4;border:1px solid rgba(45,212,191,.4)}"
-			        & ".cab .fic{color:#FCD34D;border:1px solid rgba(251,191,36,.4)}"
-			        & ".cab .pto{width:8px;height:8px;border-radius:50%;animation:pulso 1.6s infinite}"
-			        & "@keyframes pulso{0%{box-shadow:0 0 0 0 var(--c)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}"
-			        & "</style>"
-			        & "<div class='cab'><div><div class='n'>" & nombre & IF ( sub <> "", " <span>· " & sub & "</span>" ) & "</div>"
-			        & "<div class='s'>" & [Título del momento] & "</div></div><div>"
-			        & "<span class='pill " & IF ( esBase, "base", "esc" ) & "' title='" & descEsc & "'><span class='pto' style='background:" & IF ( esBase, "#2DD4BF;--c:rgba(45,212,191,.7)", "#F43F5E;--c:rgba(244,63,94,.7)" ) & "'></span>"
-			        & IF ( esBase, "ESCENARIO BASE", "ESCENARIO · " & UPPER ( esc ) ) & "</span>"
-			        & IF ( ficticios, "<span class='pill fic'>DATOS FICTICIOS</span>" ) & "</div></div>"
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.cab{display:flex;justify-content:space-between;align-items:flex-start;height:100%}.ti{font-size:50px;font-weight:400;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}.pl{display:inline-flex;align-items:center;justify-content:center;width:62px;height:40px;border-radius:999px;vertical-align:6px;margin:0 6px}.pl svg{width:21px;height:21px}.pl.g{background:#fff;border:1px solid var(--lin)}.pl.l{background:var(--lime)}.der{display:flex;align-items:center;gap:10px;margin-top:22px}.fe{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--lin);border-radius:999px;padding:7px 18px 7px 8px}.fe .ci{width:34px;height:34px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center}.fe .ci svg{width:17px;height:17px}.fe b{display:block;font-size:14px;font-weight:600}.fe span{display:block;font-size:11.5px;color:var(--mut)}.fe b::first-letter,.fe span::first-letter{text-transform:uppercase}.fic{font-size:11.5px;font-weight:600;border-radius:999px;padding:9px 14px;border:1px dashed var(--fai);color:var(--ink2);white-space:nowrap}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='cab'><div class='ti'>" & nombre & "<span class='pl l'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></span>de la red<br>y<span class='pl g'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></span>sus rutas</div>"
+			        & "<div class='der'>" & IF ( ficticios, "<span class='fic'>Datos ficticios · simulación</span>" )
+			        & "<div class='fe'><div class='ci'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div><b>" & fecha & "</b><span>" & sub & "</span></div></div></div></div></div>"
 		displayFolder: 7 · HTML
 		lineageTag: 772d78e9-6e36-5a76-a243-de66bfc12403
 
-	measure 'HTML · Indicadores' =
-			VAR esBase = [Escenario elegido] = "Base"
-			VAR valor = COALESCE ( [Valor en tránsito (€)], 0 )
-			VAR valorB = COALESCE ( [Valor en tránsito (Base)], 0 )
-			VAR envios = COALESCE ( [Envíos en tránsito], 0 )
-			VAR retr = COALESCE ( [Envíos retrasados en tránsito], 0 )
-			VAR valorRetr = COALESCE ( [Valor retrasado en tránsito (€)], 0 )
-			VAR pctRetr = DIVIDE ( valorRetr, valor )
-			VAR punt = [Puntualidad %]
-			VAR puntB = [Puntualidad (Base)]
-			VAR retMed = [Retraso medio (días)]
-			VAR retMedB = [Retraso medio (Base)]
-			VAR p2p = [Retraso en tránsito (días)]
-			VAR p2pB = [Retraso en tránsito (Base)]
-			VAR flete = [Flete (30 días)]
-			VAR fleteB = [Flete (Base)]
-			VAR fmtM = FORMAT ( valor / 1000000, "0.0", "es-ES" )
-			VAR dM = ( valor - valorB ) / 1000000
-			VAR dPunt = ( punt - puntB ) * 100
-			VAR dRet = retMed - retMedB
-			VAR dP2P = p2p - p2pB
-			VAR dFlete = ( flete - fleteB ) / 1000
-			VAR t = [Momento]
-			VAR vias =
-			    ADDCOLUMNS (
-			        CALCULATETABLE ( VALUES ( Envios[Vía] ), Envios[Salida] <= t, Envios[Entrega] > t ),
-			        "@v", CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Salida] <= t, Envios[Entrega] > t )
-			    )
-			VAR maxVia = MAXX ( vias, [@v] )
-			VAR viaTop = MAXX ( TOPN ( 1, vias, [@v], DESC ), Envios[Vía] )
-			VAR barra =
-			    CONCATENATEX (
-			        vias,
-			        "<i style='width:" & FORMAT ( DIVIDE ( [@v], valor ) * 100, "0.0", "en-US" ) & "%;background:"
-			            & SWITCH ( Envios[Vía], "Suez", "#38BDF8", "Cabo", "#F59E0B", "Atlántico", "#2DD4BF", "Mediterráneo", "#A78BFA", "Europa", "#94A3B8", "Aérea", "#E879F9", "#64748B" ) & "'></i>",
-			        "", [@v], DESC
-			    )
-			VAR filas =
-			    CONCATENATEX (
-			        vias,
-			        "<div class='via'><span><b style='background:"
-			            & SWITCH ( Envios[Vía], "Suez", "#38BDF8", "Cabo", "#F59E0B", "Atlántico", "#2DD4BF", "Mediterráneo", "#A78BFA", "Europa", "#94A3B8", "Aérea", "#E879F9", "#64748B" )
-			            & "'></b>" & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Europa", "Carretera (Europa)", "Aérea", "Avión", Envios[Vía] ) & "</span><span>"
-			            & FORMAT ( DIVIDE ( [@v], valor ), "0%", "es-ES" ) & " <em>" & FORMAT ( [@v] / 1000000, "0.0", "es-ES" ) & " M€</em></span></div>",
-			        "", [@v], DESC
-			    )
-			VAR esc = [Escenario elegido]
-			VAR descEsc = LOOKUPVALUE ( Escenarios[Descripción], Escenarios[Escenario], esc )
-			VAR hoy = [Fecha elegida]
-			VAR incid = CALCULATETABLE ( Incidencias, Incidencias[Desde] <= hoy, Incidencias[Hasta] >= hoy )
-			VAR proximas = CALCULATETABLE ( Incidencias, Incidencias[Desde] > hoy )
-			VAR listaInc =
-			    CONCATENATEX (
-			        incid,
-			        "<div class='inc'><b style='background:" & IF ( Incidencias[Tipo] = "Cierre", "#F43F5E", "#F59E0B" ) & "'></b><span>" & Incidencias[Incidencia]
-			            & "</span><em>" & FORMAT ( Incidencias[Desde], "d mmm", "es-ES" ) & " – " & FORMAT ( Incidencias[Hasta], "d mmm", "es-ES" ) & "</em></div>",
-			        "", Incidencias[Desde], ASC, Incidencias[Incidencia], ASC
-			    )
-			VAR nProx = COUNTROWS ( proximas )
-			VAR circ = 263.89
-			VAR resto = FORMAT ( circ * ( 1 - COALESCE ( punt, 0 ) ), "0.0", "en-US" )
-			VAR colPunt = SWITCH ( TRUE (), punt >= 0.85, "#2DD4BF", punt >= 0.6, "#F59E0B", "#F43F5E" )
-			RETURN
-			    "<style>html,body{margin:0;padding:0;overflow:hidden}"
-			        & ".kp{font-family:'Segoe UI',sans-serif;color:#E2E8F0;display:grid;gap:12px}"
-			        & ".c{position:relative;background:rgba(10,17,32,.80);border:1px solid rgba(148,163,184,.14);border-radius:18px;padding:13px 16px;overflow:hidden}.c:before{content:'';position:absolute;left:26px;right:26px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)}.et{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#64748B;display:flex;justify-content:space-between;align-items:baseline}.et em{font-style:normal;letter-spacing:.02em;text-transform:none;color:#475569;font-weight:500}.delta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px}.mal{color:#FDA4AF;background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.35)}.bien{color:#5EEAD4;background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.3)}.neutro{color:#94A3B8;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25)}"
-			        & ".big{font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums}.big small{font-size:17px;color:#94A3B8;font-weight:600;margin-left:4px}"
-			        & ".cuatro{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px}.cuatro div{padding-left:11px;border-left:1px solid rgba(148,163,184,.12)}.cuatro div:first-child{padding-left:0;border-left:none}"
-			        & ".cuatro b{display:block;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}.cuatro small{font-size:10.5px;color:#94A3B8}"
-			        & ".pista{height:6px;border-radius:3px;background:rgba(148,163,184,.14);margin:12px 0 6px;overflow:hidden;display:flex}.pista i{display:block;height:100%;animation:crecer 1.1s cubic-bezier(.2,.8,.2,1)}@keyframes crecer{from{width:0}}"
-			        & ".nota{font-size:12px;color:#94A3B8}.nota b{color:#FDA4AF}"
-			        & ".hero{display:flex;align-items:center;gap:16px;margin-top:6px}.aro{position:relative;width:96px;height:96px;flex:none}"
-			        & ".aro .cen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}"
-			        & ".v{animation:llenar 1.2s cubic-bezier(.2,.8,.2,1)}@keyframes llenar{from{stroke-dashoffset:263.89}}"
-			        & ".fila{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#94A3B8;margin-top:7px}.fila b{color:#E2E8F0;font-weight:600;font-variant-numeric:tabular-nums;margin-right:6px}"
-			        & ".via{display:flex;justify-content:space-between;font-size:12.5px;color:#CBD5E1;margin-top:6px}.via b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px}.via em{font-style:normal;color:#64748B;margin-left:6px}"
-			        & ".alerta{margin-top:9px;font-size:12px;color:#FCD34D;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:7px 10px}"
-			        & ".desc{margin-top:8px;font-size:12.5px;color:#CBD5E1;line-height:1.4}.inc{display:flex;align-items:center;gap:8px;font-size:12px;color:#E2E8F0;margin-top:7px}"
-			        & ".inc b{width:8px;height:8px;border-radius:50%;flex:none}.inc span{flex:1}.inc em{font-style:normal;color:#64748B}.sin{font-size:12px;color:#64748B;margin-top:7px}"
-			        & "</style><div class='kp'>"
-			        & "<div class='c'><div class='et'>En tránsito hoy<em>mediodía del día elegido</em></div>"
-			        & "<div class='big'>" & fmtM & "<small>M€</small></div>"
-			        & "<div style='margin-top:6px'>" & IF ( esBase || ISBLANK ( dM ), "", "<span class='delta " & IF ( ABS ( dM ) < 0.05, "neutro", IF ( dM > 0, "mal", "bien" ) ) & "'>" & IF ( dM > 0, "+" ) & FORMAT ( dM, "#,0.0", "es-ES" ) & " M€ vs base</span>" ) & "</div>"
-			        & "<div class='cuatro'><div><b>" & FORMAT ( COALESCE ( [Buques en el mar], 0 ), "#,0", "es-ES" ) & "</b><small>buques</small></div>"
-			        & "<div><b>" & FORMAT ( COALESCE ( [Vuelos en el aire], 0 ), "#,0", "es-ES" ) & "</b><small>vuelos</small></div>"
-			        & "<div><b>" & FORMAT ( COALESCE ( [Camiones en ruta], 0 ), "#,0", "es-ES" ) & "</b><small>camiones</small></div>"
-			        & "<div><b>" & FORMAT ( envios, "#,0", "es-ES" ) & "</b><small>cargas</small></div></div>"
-			        & "<div class='pista'><i style='width:" & FORMAT ( COALESCE ( pctRetr, 0 ) * 100, "0.0", "en-US" ) & "%;background:linear-gradient(90deg,#F59E0B,#F43F5E)'></i></div>"
-			        & "<div class='nota'><b>" & FORMAT ( retr, "#,0", "es-ES" ) & " cargas retrasadas</b> · " & FORMAT ( valorRetr / 1000000, "0.0", "es-ES" ) & " M€ ("
-			        & FORMAT ( COALESCE ( pctRetr, 0 ), "0%", "es-ES" ) & " del valor en tránsito)</div></div>"
-			        & "<div class='c'><div class='et'>Servicio<em>entregas de los últimos 30 días</em></div><div class='hero'>"
-			        & "<div class='aro'><svg viewBox='0 0 96 96' width='96' height='96'><circle cx='48' cy='48' r='42' fill='none' stroke='rgba(148,163,184,.14)' stroke-width='8'/>"
-			        & "<circle class='v' cx='48' cy='48' r='42' fill='none' stroke='" & colPunt & "' stroke-width='8' stroke-linecap='round' stroke-dasharray='263.89' stroke-dashoffset='" & resto & "' transform='rotate(-90 48 48)'/></svg>"
-			        & "<div class='cen' style='color:" & colPunt & "'>" & FORMAT ( COALESCE ( punt, 0 ), "0%", "es-ES" ) & "</div></div>"
-			        & "<div style='flex:1'><div class='fila'>Puntualidad<span>" & IF ( esBase || ISBLANK ( dPunt ), "", "<span class='delta " & IF ( ABS ( dPunt ) < 0.05, "neutro", IF ( dPunt < 0, "mal", "bien" ) ) & "'>" & IF ( dPunt > 0, "+" ) & FORMAT ( dPunt, "#,0", "es-ES" ) & " pp vs base</span>" ) & "</span></div>"
-			        & "<div class='fila'>Retraso medio<span><b>" & FORMAT ( retMed, "0.0", "es-ES" ) & " d</b>" & IF ( esBase || ISBLANK ( dRet ), "", "<span class='delta " & IF ( ABS ( dRet ) < 0.05, "neutro", IF ( dRet > 0, "mal", "bien" ) ) & "'>" & IF ( dRet > 0, "+" ) & FORMAT ( dRet, "#,0.0", "es-ES" ) & " d vs base</span>" ) & "</span></div>"
-			        & "<div class='fila'>En tránsito<span><b>" & FORMAT ( p2p, "0.0", "es-ES" ) & " d</b>" & IF ( esBase || ISBLANK ( dP2P ), "", "<span class='delta " & IF ( ABS ( dP2P ) < 0.05, "neutro", IF ( dP2P > 0, "mal", "bien" ) ) & "'>" & IF ( dP2P > 0, "+" ) & FORMAT ( dP2P, "#,0.0", "es-ES" ) & " d vs base</span>" ) & "</span></div>"
-			        & "</div></div></div>"
-			        & "<div class='c'><div class='et'>Exposición por vía<em>valor en tránsito</em></div>"
-			        & "<div class='pista' style='height:10px;border-radius:5px'>" & barra & "</div>" & filas
-			        & IF ( DIVIDE ( maxVia, valor ) >= 0.5, "<div class='alerta'>El " & FORMAT ( DIVIDE ( maxVia, valor ), "0%", "es-ES" ) & " del valor en tránsito depende de una sola vía: "
-			            & SWITCH ( viaTop, "Cabo", "el Cabo de Buena Esperanza", "Europa", "la carretera europea", "Aérea", "el avión", viaTop ) & ".</div>" )
-			        & "</div>"
-			        & "<div class='c'><div class='et'>Flete<em>cargas que salieron en los últimos 30 días</em></div>"
-			        & "<div class='fila' style='margin-top:9px'><span style='font-size:22px;font-weight:700;color:#E2E8F0'>" & FORMAT ( flete / 1000, "#,0", "es-ES" ) & " mil €</span>"
-			        & IF ( esBase || ISBLANK ( dFlete ), "", "<span class='delta " & IF ( ABS ( dFlete ) < 0.05, "neutro", IF ( dFlete > 0, "mal", "bien" ) ) & "'>" & IF ( dFlete > 0, "+" ) & FORMAT ( dFlete, "#,0", "es-ES" ) & " mil € vs base</span>" ) & "</div></div>"
-			        & "<div class='c'><div class='et'>Qué está pasando<em>" & IF ( esBase, "escenario base", "escenario simulado" ) & "</em></div>"
-			        & "<div class='desc'>" & descEsc & "</div>"
-			        & IF ( ISEMPTY ( incid ), "<div class='sin'>Ninguna incidencia activa este día" & IF ( nProx > 0, " · " & nProx & " más adelante", "" ) & ".</div>", listaInc )
-			        & "</div>"
-			        & "</div>"
-		displayFolder: 7 · HTML
-		lineageTag: 33e4d027-b65b-52c2-9fab-a8346aedf43d
-
+	/// Riesgo de rotura: cargas cuyo retraso supera los días de cobertura de su categoría, agrupadas por proveedor.
 	measure 'HTML · Alertas' =
+			VAR alerta = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3.5 2.8 19.5h18.4z'/><path d='M12 10v4.5M12 17.2v.3'/></svg>"
 			VAR t = [Momento]
 			VAR enTransito =
 			    FILTER (
 			        ADDCOLUMNS (
 			            CALCULATETABLE ( Envios, Envios[Salida] <= t, Envios[Entrega] > t ),
 			            "@cob", RELATED ( 'Categorías'[Cobertura (días)] ),
-			            "@prov", RELATED ( Proveedores[Proveedor] ),
-			            "@viaje", RELATED ( Viajes[Viaje] ),
+			            "@ciudad", RELATED ( Proveedores[Ciudad] ),
 			            "@color", RELATED ( 'Categorías'[Color] )
 			        ),
 			        Envios[Retraso (días)] > 2
 			    )
-			VAR riesgo = FILTER ( enTransito, Envios[Retraso (días)] > [@cob] )
-			VAR nRiesgo = COUNTROWS ( riesgo )
-			VAR vRiesgo = SUMX ( riesgo, Envios[Valor (€)] )
+			VAR conHolgura = ADDCOLUMNS ( enTransito, "@hol", Envios[Retraso (días)] - [@cob] )
+			VAR riesgo = FILTER ( conHolgura, [@hol] > 0 )
+			VAR nRiesgo = COALESCE ( COUNTROWS ( riesgo ), 0 )
+			VAR vRiesgo = COALESCE ( SUMX ( riesgo, Envios[Valor (€)] ), 0 )
+			VAR grupos =
+			    GROUPBY (
+			        conHolgura,
+			        Envios[ProveedorID],
+			        "@ciudadG", MAXX ( CURRENTGROUP (), [@ciudad] ),
+			        "@catG", MAXX ( CURRENTGROUP (), Envios[Categoría] ),
+			        "@colorG", MAXX ( CURRENTGROUP (), [@color] ),
+			        "@cobG", MAXX ( CURRENTGROUP (), [@cob] ),
+			        "@nG", SUMX ( CURRENTGROUP (), 1 ),
+			        "@nrG", SUMX ( CURRENTGROUP (), IF ( [@hol] > 0, 1, 0 ) ),
+			        "@holG", MAXX ( CURRENTGROUP (), [@hol] ),
+			        "@retG", MAXX ( CURRENTGROUP (), Envios[Retraso (días)] ),
+			        "@valorG", SUMX ( CURRENTGROUP (), Envios[Valor (€)] )
+			    )
 			VAR lista =
 			    CONCATENATEX (
-			        TOPN ( 6, enTransito, Envios[Retraso (días)] - [@cob], DESC, Envios[Valor (€)], DESC ),
-			        VAR rot = Envios[Retraso (días)] > [@cob]
-			        RETURN
-			            "<div class='al'><b class='pt' style='background:" & [@color] & "'></b><div class='tx'><div class='t1'>" & [@prov] & "</div>"
-			                & "<div class='t2'>" & Envios[Categoría] & " · " & [@viaje] & "</div></div>"
-			                & "<div class='dr'><span class='dias " & IF ( rot, "rot", "ret" ) & "'>+" & FORMAT ( Envios[Retraso (días)], "0", "es-ES" ) & " d</span>"
-			                & "<div class='t2'>" & IF ( rot, "cubre " & [@cob] & " d · rotura", "cubre " & [@cob] & " d" ) & "</div></div></div>",
-			        "", Envios[Retraso (días)] - [@cob], DESC, Envios[Valor (€)], DESC
+			        TOPN ( 5, grupos, [@holG], DESC, [@valorG], DESC ),
+			        "<div class='it'><div class='ini'>" & RIGHT ( Envios[ProveedorID], 2 ) & "<i style='background:" & [@colorG] & "'></i></div>"
+			            & "<div class='tx'><div class='t1'>" & [@ciudadG] & "<span class='ct'>" & [@catG] & "</span></div><div class='t2'>"
+			            & IF ( [@nrG] > 0, IF ( [@nrG] = [@nG], [@nG] & IF ( [@nG] = 1, " carga sin stock", " cargas sin stock" ), [@nrG] & " de " & [@nG] & " cargas sin stock" ), [@nG] & IF ( [@nG] = 1, " carga", " cargas" ) & " con retraso" )
+			            & " · " & FORMAT ( [@valorG] / 1000, "#,0", "es-ES" ) & " mil € · cubre " & [@cobG] & " d</div></div>"
+			            & "<span class='dd " & IF ( [@nrG] > 0, "rot", "ret" ) & "'>+" & FORMAT ( [@retG], "0", "es-ES" ) & " d</span></div>",
+			        "", [@holG], DESC, [@valorG], DESC
 			    )
 			RETURN
-			    "<style>html,body{margin:0;padding:0;overflow:hidden}"
-			        & ".al-w{font-family:'Segoe UI',sans-serif;color:#E2E8F0}.c{position:relative;background:rgba(10,17,32,.80);border:1px solid rgba(148,163,184,.14);border-radius:18px;padding:13px 16px;overflow:hidden}.c:before{content:'';position:absolute;left:26px;right:26px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)}.et{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#64748B;display:flex;justify-content:space-between;align-items:baseline}.et em{font-style:normal;letter-spacing:.02em;text-transform:none;color:#475569;font-weight:500}.delta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px}.mal{color:#FDA4AF;background:rgba(244,63,94,.14);border:1px solid rgba(244,63,94,.35)}.bien{color:#5EEAD4;background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.3)}.neutro{color:#94A3B8;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25)}"
-			        & ".res{display:flex;gap:10px;margin:10px 0 4px}.res div{flex:1;border-radius:12px;padding:8px 10px;background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.25)}"
-			        & ".res b{display:block;font-size:20px;color:#FDA4AF;font-variant-numeric:tabular-nums}.res small{font-size:11px;color:#94A3B8}"
-			        & ".al{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(148,163,184,.1)}.al:first-of-type{border-top:none}"
-			        & ".pt{width:9px;height:9px;border-radius:50%;flex:none}.tx{flex:1;min-width:0}.t1{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
-			        & ".t2{font-size:11px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dr{text-align:right;flex:none}"
-			        & ".dias{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px}.rot{color:#FFF1F2;background:#F43F5E}.ret{color:#FCD34D;background:rgba(245,158,11,.16)}"
-			        & ".ok{font-size:12.5px;color:#5EEAD4;margin-top:10px}"
-			        & "</style><div class='al-w'><div class='c'><div class='et'>Riesgo de rotura en el almacén<em>retraso frente a días de cobertura</em></div>"
-			        & IF (
-			            COUNTROWS ( enTransito ) = 0,
-			            "<div class='ok'>Ninguna carga en tránsito va con más de dos días de retraso.</div>",
-			            "<div class='res'><div><b>" & COALESCE ( nRiesgo, 0 ) & "</b><small>cargas llegarán cuando ya no quede stock</small></div>"
-			                & "<div><b>" & FORMAT ( COALESCE ( vRiesgo, 0 ) / 1000000, "0.0", "es-ES" ) & " M€</b><small>valor de esas cargas</small></div></div>" & lista
-			        )
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.hd{display:flex;align-items:center;gap:12px}.hd .tt{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}.hd .tt em{display:block;font-style:normal;font-size:11.5px;font-weight:400;color:var(--mut);letter-spacing:0;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.bdg{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:5px 10px;background:var(--lime);align-self:center;margin-left:auto;white-space:nowrap}.bdg.neg{background:var(--ink);color:var(--lime)}.bdg svg{width:13px;height:13px}.al{display:flex;flex-direction:column;gap:8px;height:100%}.ca{background:var(--card);border-radius:24px;padding:16px 18px}.res{display:flex;align-items:baseline;gap:10px;margin-top:10px}.res b{font-size:44px;font-weight:300;letter-spacing:-.045em;line-height:1}.res .rl{font-size:13px;color:var(--ink2);line-height:1.25}.it{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:20px;padding:10px 14px 10px 10px}.ini{width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;position:relative;flex:none}.in"
+			& "i i{position:absolute;right:-3px;top:-3px;width:11px;height:11px;border-radius:50%;border:2px solid var(--card)}.it .tx{flex:1;min-width:0}.t1{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ct{font-size:10.5px;font-weight:500;color:var(--ink2);background:#fff;border:1px solid var(--lin);border-radius:999px;padding:1px 7px;margin-left:7px;vertical-align:1px}.t2{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}.dd{font-size:12px;font-weight:600;border-radius:999px;padding:4px 9px;white-space:nowrap}.dd.rot{background:var(--ink);color:var(--lime)}.dd.ret{background:#fff;border:1px solid var(--lin)}.ok{font-size:13px;color:var(--ink2)}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='al'><div class='ca'><div class='hd'><div class='chip'>" & alerta & "</div><div class='tt'>Riesgo de rotura en el almacén<em>el retraso supera los días de stock de seguridad</em></div></div>"
+			        & "<div class='res'><b>" & nRiesgo & "</b><span class='rl'>" & IF ( nRiesgo = 1, "carga llegará<br>sin stock", "cargas llegarán<br>sin stock" ) & "</span>"
+			        & "<span class='bdg" & IF ( nRiesgo > 0, " neg'>" & FORMAT ( vRiesgo / 1000000, "0.0", "es-ES" ) & " M€", "'>sin riesgo" ) & "</span></div></div>"
+			        & IF ( ISEMPTY ( enTransito ), "<div class='ca ok'>Ninguna carga en tránsito va con más de dos días de retraso.</div>", lista )
 			        & "</div></div>"
 		displayFolder: 7 · HTML
 		lineageTag: eb93f711-6376-5c17-9f9c-a00539b02813
 
+	/// Llegadas al almacén en los próximos 14 o 30 días (selector de la tarjeta): cápsula lima a tiempo y negra con retraso.
 	measure 'HTML · Llegadas' =
+			VAR icoBarras = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M5 20V11M10 20V5M15 20v-6M20 20V9'/></svg>"
+			VAR meses = "ene feb mar abr may jun jul ago sep oct nov dic "
 			VAR t = [Momento]
+			VAR hoy = INT ( t )
+			VAR nd = COALESCE ( SELECTEDVALUE ( Horizonte[Días] ), 14 )
+			VAR ent =
+			    CALCULATETABLE (
+			        SELECTCOLUMNS ( Envios, "@dia", INT ( Envios[Entrega] ), "@val", Envios[Valor (€)], "@tarde", IF ( Envios[Retraso (días)] > 2, 1, 0 ) ),
+			        Envios[Entrega] >= hoy, Envios[Entrega] < hoy + nd
+			    )
 			VAR dias =
 			    ADDCOLUMNS (
-			        GENERATESERIES ( 0, 13, 1 ),
-			        "@ini", INT ( t ) + [Value],
-			        "@v", VAR a = INT ( t ) + [Value] RETURN COALESCE ( CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Entrega] >= a, Envios[Entrega] < a + 1 ), 0 ),
-			        "@r", VAR a = INT ( t ) + [Value] RETURN COALESCE ( CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Entrega] >= a, Envios[Entrega] < a + 1, Envios[Retraso (días)] > 2 ), 0 )
+			        GENERATESERIES ( 0, nd - 1, 1 ),
+			        "@d", hoy + [Value],
+			        "@v", VAR a = hoy + [Value] RETURN SUMX ( FILTER ( ent, [@dia] = a ), [@val] ) + 0,
+			        "@r", VAR a = hoy + [Value] RETURN SUMX ( FILTER ( ent, [@dia] = a && [@tarde] = 1 ), [@val] ) + 0,
+			        "@n", VAR a = hoy + [Value] RETURN COUNTROWS ( FILTER ( ent, [@dia] = a ) ) + 0,
+			        "@nr", VAR a = hoy + [Value] RETURN COUNTROWS ( FILTER ( ent, [@dia] = a && [@tarde] = 1 ) ) + 0
 			    )
-			VAR maxV = MAX ( MAXX ( dias, [@v] ), 1 )
-			VAR total = SUMX ( dias, [@v] )
-			VAR n = CALCULATE ( COUNTROWS ( Envios ), Envios[Entrega] >= INT ( t ), Envios[Entrega] < INT ( t ) + 14 )
+			VAR mx = MAX ( MAXX ( dias, [@v] ), 1 )
+			VAR paso = IF ( mx <= 1000000, 100000, IF ( mx <= 2000000, 200000, 500000 ) )
+			VAR tope = ( INT ( mx / paso ) + 1 ) * paso
+			VAR ancho = ( 840 - 34 ) / nd
+			VAR bw = MIN ( 30, ancho * 0.72 )
+			VAR rr = bw / 2
+			VAR cada = IF ( nd > 14, 2, 1 )
+			VAR rejilla =
+			    CONCATENATEX (
+			        GENERATESERIES ( 0, INT ( tope / paso ), 1 ),
+			        VAR y = 136 - [Value] * paso / tope * 128
+			        RETURN "<line x1='34' x2='840' y1='" & FORMAT ( y, "0.0", "en-US" ) & "' y2='" & FORMAT ( y, "0.0", "en-US" ) & "' stroke='#E2E5DF'/>"
+			            & "<text x='26' y='" & FORMAT ( y + 3.5, "0.0", "en-US" ) & "' text-anchor='end' font-size='10' fill='#8A8F87'>" & FORMAT ( [Value] * paso / 1000000, "0.0", "es-ES" ) & "</text>",
+			        "", [Value], ASC
+			    )
 			VAR barras =
 			    CONCATENATEX (
 			        dias,
-			        VAR h = DIVIDE ( [@v], maxV ) * 92
-			        VAR hr = DIVIDE ( [@r], maxV ) * 92
-			        VAR x = [Value] * 27 + 4
+			        VAR cx = 34 + ancho * ( [Value] + 0.5 )
+			        VAR x = cx - rr
+			        VAR h = MAX ( [@v] / tope * 128, bw )
+			        VAR hr = [@r] / tope * 128
+			        VAR hr2 = MIN ( MAX ( hr, bw ), h )
+			        VAR ytop = 136 - h
+			        VAR dd = [@d]
+			        VAR dia = DAY ( dd ) & " " & TRIM ( MID ( meses, ( MONTH ( dd ) - 1 ) * 4 + 1, 4 ) )
+			        VAR yl = IF ( hr > 0.5, ytop + hr2 + rr, ytop + rr )
 			        RETURN
-			            "<rect x='" & x & "' y='" & FORMAT ( 100 - h, "0.0", "en-US" ) & "' width='19' height='" & FORMAT ( h, "0.0", "en-US" ) & "' rx='4' fill='url(#gL)'/>"
-			                & IF ( hr > 0, "<rect x='" & x & "' y='" & FORMAT ( 100 - hr, "0.0", "en-US" ) & "' width='19' height='" & FORMAT ( hr, "0.0", "en-US" ) & "' rx='4' fill='#F59E0B' fill-opacity='.85'/>" )
-			                & "<text x='" & FORMAT ( x + 9.5, "0.0", "en-US" ) & "' y='114' fill='" & IF ( WEEKDAY ( [@ini], 2 ) >= 6, "#334155", "#64748B" ) & "' font-size='9.5' text-anchor='middle'>" & DAY ( [@ini] ) & "</text>",
+			            IF ( MOD ( [Value], cada ) = 0,
+			                "<text x='" & FORMAT ( cx, "0.0", "en-US" ) & "' y='158' text-anchor='middle' font-size='11' font-weight='" & IF ( [Value] = 0, "700", "400" )
+			                    & "' fill='" & IF ( [Value] = 0, "#161616", IF ( WEEKDAY ( dd, 2 ) >= 6, "#A3A79F", "#6F746C" ) ) & "'>" & dia & "</text>" )
+			            & IF ( [@v] <= 0,
+			                "<rect x='" & FORMAT ( x, "0.0", "en-US" ) & "' y='12' width='" & FORMAT ( bw, "0.0", "en-US" ) & "' height='124' rx='" & FORMAT ( rr, "0.0", "en-US" ) & "' fill='none' stroke='#B9BDB5' stroke-width='1.3' stroke-dasharray='4 4'/>"
+			                    & "<circle cx='" & FORMAT ( cx, "0.0", "en-US" ) & "' cy='" & FORMAT ( 12 + rr, "0.0", "en-US" ) & "' r='" & FORMAT ( rr * 0.4, "0.0", "en-US" ) & "' fill='#B9BDB5'/>",
+			                "<rect class='b' x='" & FORMAT ( x, "0.0", "en-US" ) & "' y='" & FORMAT ( ytop, "0.0", "en-US" ) & "' width='" & FORMAT ( bw, "0.0", "en-US" ) & "' height='" & FORMAT ( h, "0.0", "en-US" ) & "' rx='" & FORMAT ( rr, "0.0", "en-US" ) & "' fill='#E2F27A'/>"
+			                    & IF ( hr > 0.5,
+			                        "<path class='b' d='M" & FORMAT ( x, "0.0", "en-US" ) & "," & FORMAT ( ytop + hr2, "0.0", "en-US" ) & " V" & FORMAT ( ytop + rr, "0.0", "en-US" ) & " a" & FORMAT ( rr, "0.0", "en-US" ) & "," & FORMAT ( rr, "0.0", "en-US" ) & " 0 0 1 " & FORMAT ( bw, "0.0", "en-US" ) & ",0 V" & FORMAT ( ytop + hr2, "0.0", "en-US" ) & " Z' fill='#161616'/>"
+			                            & "<circle cx='" & FORMAT ( cx, "0.0", "en-US" ) & "' cy='" & FORMAT ( ytop + rr, "0.0", "en-US" ) & "' r='" & FORMAT ( rr * 0.433, "0.0", "en-US" ) & "' fill='#fff'/>" )
+			                    & IF ( yl < 136 - 6 && ( hr <= 0.5 || h - hr2 >= bw ),
+			                        "<circle cx='" & FORMAT ( cx, "0.0", "en-US" ) & "' cy='" & FORMAT ( yl, "0.0", "en-US" ) & "' r='" & FORMAT ( rr * 0.433, "0.0", "en-US" ) & "' fill='#fff'/><circle cx='" & FORMAT ( cx, "0.0", "en-US" ) & "' cy='" & FORMAT ( yl, "0.0", "en-US" ) & "' r='" & FORMAT ( rr * 0.24, "0.0", "en-US" ) & "' fill='#161616'/>" )
+			            ),
 			        "", [Value], ASC
 			    )
+			VAR iMax = MAXX ( TOPN ( 1, dias, [@v], DESC, [Value], ASC ), [Value] )
+			VAR iRet = IF ( MAXX ( dias, [@r] ) > 0, MAXX ( TOPN ( 1, dias, [@r], DESC, [Value], ASC ), [Value] ), -1 )
+			VAR etiquetaRet =
+			    IF ( iRet >= 0,
+			        VAR fila = FILTER ( dias, [Value] = iRet )
+			        VAR cx = 34 + ancho * ( iRet + 0.5 )
+			        VAR ytop = 136 - MAX ( MAXX ( fila, [@v] ) / tope * 128, bw )
+			        VAR izq = iRet >= nd - 3
+			        VAR xr = IF ( izq, cx - rr - 76, cx + rr + 6 )
+			        RETURN "<rect x='" & FORMAT ( xr, "0.0", "en-US" ) & "' y='" & FORMAT ( ytop + 4, "0.0", "en-US" ) & "' width='70' height='22' rx='11' fill='#161616'/>"
+			            & "<text x='" & FORMAT ( xr + 35, "0.0", "en-US" ) & "' y='" & FORMAT ( ytop + 19, "0.0", "en-US" ) & "' text-anchor='middle' font-size='11' font-weight='600' fill='#fff'>"
+			            & FORMAT ( DIVIDE ( MAXX ( fila, [@r] ), MAXX ( fila, [@v] ) ), "0 %", "es-ES" ) & " tarde</text>" )
+			VAR etiquetaMax =
+			    IF ( iMax <> iRet && MAXX ( dias, [@v] ) > 0,
+			        VAR fila = FILTER ( dias, [Value] = iMax )
+			        VAR cx = 34 + ancho * ( iMax + 0.5 )
+			        VAR ytop = 136 - MAX ( MAXX ( fila, [@v] ) / tope * 128, bw )
+			        VAR xr = IF ( iMax >= 2, cx - rr - 69, cx + rr + 6 )
+			        RETURN "<rect x='" & FORMAT ( xr, "0.0", "en-US" ) & "' y='" & FORMAT ( ytop - 2, "0.0", "en-US" ) & "' width='64' height='22' rx='11' fill='#E2F27A'/>"
+			            & "<text x='" & FORMAT ( xr + 32, "0.0", "en-US" ) & "' y='" & FORMAT ( ytop + 13, "0.0", "en-US" ) & "' text-anchor='middle' font-size='11' font-weight='600' fill='#161616'>"
+			            & FORMAT ( MAXX ( fila, [@v] ) / 1000000, "0.00", "es-ES" ) & " M€</text>" )
+			VAR total = SUMX ( dias, [@v] )
+			VAR n = SUMX ( dias, [@n] )
+			VAR nr = SUMX ( dias, [@nr] )
 			RETURN
-			    "<style>html,body{margin:0;padding:0;overflow:hidden}"
-			        & ".ll{font-family:'Segoe UI',sans-serif;color:#E2E8F0}"
-			        & ".c{position:relative;background:rgba(10,17,32,.80);border:1px solid rgba(148,163,184,.14);border-radius:18px;padding:13px 16px;overflow:hidden}"
-			        & ".et{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#64748B;display:flex;justify-content:space-between;align-items:baseline}"
-			        & ".et em{font-style:normal;letter-spacing:.02em;text-transform:none;color:#475569;font-weight:500}"
-			        & ".tot{font-size:13px;color:#94A3B8;margin-top:6px}.tot b{color:#E2E8F0;font-size:18px;margin-right:4px}"
-			        & ".leg{font-size:11px;color:#64748B;margin-top:2px}.leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 5px 0 10px;vertical-align:-1px}"
-			        & "svg rect{animation:subir .9s cubic-bezier(.2,.8,.2,1)}@keyframes subir{from{transform:scaleY(0)}}svg rect{transform-origin:0 100px}"
-			        & "</style><div class='ll'><div class='c'><div class='et'>Llegadas al almacén<em>próximos 14 días</em></div>"
-			        & "<div class='tot'><b>" & FORMAT ( COALESCE ( total, 0 ) / 1000000, "0.0", "es-ES" ) & " M€</b> en " & FORMAT ( COALESCE ( n, 0 ), "#,0", "es-ES" ) & " cargas"
-			        & "<span class='leg'><i style='background:#2DD4BF'></i>a tiempo<i style='background:#F59E0B'></i>con retraso</span></div>"
-			        & "<svg viewBox='0 0 380 118' width='100%' height='118' style='display:block;margin-top:6px'><defs><linearGradient id='gL' x1='0' y1='0' x2='0' y2='1'>"
-			        & "<stop offset='0' stop-color='#5EEAD4'/><stop offset='1' stop-color='#0F766E'/></linearGradient></defs>" & barras & "</svg></div></div>"
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.card{position:relative;background:var(--card);border-radius:28px;padding:18px 20px;height:100%;overflow:hidden;display:flex;flex-direction:column}.hd{display:flex;align-items:center;gap:12px}.hd .tt{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}.hd .tt em{display:block;font-style:normal;font-size:11.5px;font-weight:400;color:var(--mut);letter-spacing:0;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.al{display:flex;flex-direction:column;gap:8px;height:100%}.dd{font-size:12px;font-weight:600;border-radius:999px;padding:4px 9px;white-space:nowrap}.ley{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--ink2);white-space:nowrap}.ley i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.tot{font-size:12px;color:var(--mut)}.tot b{color:var(--ink);font-weight:600}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='card' style='padding:16px 22px'><div class='hd'><div class='chip'>" & icoBarras & "</div>"
+			        & "<div class='tt' style='flex:none;font-size:22px;font-weight:400;letter-spacing:-.03em'>Llegadas al almacén</div>"
+			        & "<div class='ley' style='margin-left:20px'><span><i style='background:#E2F27A'></i>a tiempo</span><span><i style='background:#161616'></i>con retraso</span>"
+			        & "<span class='tot'>· <b>" & FORMAT ( total / 1000000, "0.0", "es-ES" ) & " M€</b> en <b>" & n & "</b> cargas, " & nr & " tarde</span></div>"
+			        & "<div style='flex:1'></div><div style='width:196px;flex:none'></div></div>"
+			        & "<svg viewBox='0 0 840 166' width='100%' height='166' style='display:block;margin-top:10px;font-family:inherit'>"
+			        & rejilla & barras & etiquetaRet & etiquetaMax & "</svg></div></div>"
 		displayFolder: 7 · HTML
 		lineageTag: 11acd114-e264-59ed-87d7-7188d62c5602
 
+	/// Leyenda del globo en pastillas.
 	measure 'HTML · Leyenda' =
-			VAR it = "<span class='i'><i class='c' style='background:"
-			RETURN
-			    "<style>html,body{margin:0;padding:0;overflow:hidden}.ley{font-family:'Segoe UI',sans-serif;color:#94A3B8;font-size:11.5px;display:flex;flex-wrap:nowrap;gap:6px 14px;align-items:center;justify-content:center;height:100%;white-space:nowrap}"
-			        & ".ley .i{display:inline-flex;align-items:center}.ley .c{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.ley .l{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:6px}"
-			        & ".ley .sep{width:1px;height:14px;background:rgba(148,163,184,.3)}</style>"
-			        & "<div class='ley'>" & it & "#F8FAFC'></i>En plazo</span>" & it & "#FBBF24'></i>3 a 7 días tarde</span>" & it & "#FB7185'></i>Más de 7 días tarde</span>"
-			        & "<span class='sep'></span>"
-			        & "<span class='i'><i class='l' style='background:#38BDF8'></i>Suez</span><span class='i'><i class='l' style='background:#F59E0B'></i>Cabo</span>"
-			        & "<span class='i'><i class='l' style='background:#2DD4BF'></i>Atlántico</span><span class='i'><i class='l' style='background:#A78BFA'></i>Mediterráneo</span>"
-			        & "<span class='i'><i class='l' style='background:#94A3B8'></i>Carretera</span><span class='i'><i class='l' style='background:#E879F9'></i>Avión</span></div>"
+			"<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.ly{display:flex;justify-content:center;align-items:center;gap:6px;height:100%}.ly span{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink2);background:#fff;border:1px solid var(--lin);border-radius:999px;padding:5px 11px;white-space:nowrap}.ly .a{width:9px;height:9px;border-radius:50%}.ly .ra{width:18px;height:4px;border-radius:2px;background:#161616;box-shadow:0 0 0 2.5px var(--lime)}.ly .rp{width:18px;border-top:1.6px dashed #A3A79F}.ly .rc{width:11px;height:11px;border-radius:50%;border:1.6px dashed var(--coral)}.ly .pv{width:9px;height:9px;transform:rotate(45deg);background:#F3A3C6;border:1.2px solid #161616;border-radius:1px}.ly{gap:5px}.ly span{padding:5px 10px}"
+			 & "</style><div class='t'>" & "<div class='ly'><span><i class='a' style='background:#161616'></i>En plazo</span><span><i class='a' style='background:#F0AE3A'></i>3 a 7 días tarde</span>"
+			    & "<span><i class='a' style='background:#EF5A3C'></i>Más de 7 días tarde</span><span><i class='ra'></i>Ruta con viajes hoy</span>"
+			    & "<span><i class='rp'></i>Ruta sin viajes</span><span><i class='rc'></i>Paso cerrado</span><span><i class='pv'></i>Proveedor</span></div></div>"
 		displayFolder: 7 · HTML
 		lineageTag: be18016d-824f-571e-817e-b9bd7bb6cd37
 
@@ -514,6 +463,653 @@ table Medidas
 		formatString: 0.0
 		displayFolder: 4 · Frente a Base
 		lineageTag: 00601202-e64e-5191-9cc5-6bb396189a08
+
+	/// Hoja de estilo común de las tarjetas HTML: colores, letra y piezas (tarjetas, cápsulas, pastillas).
+	measure 'HTML · Estilo' =
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}"
+			& ".t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}"
+			& ".card{position:relative;background:var(--card);border-radius:28px;padding:18px 20px;height:100%;overflow:hidden;display:flex;flex-direction:column}"
+			& ".hd{display:flex;align-items:center;gap:12px}.hd .tt{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}"
+			& ".hd .tt em{display:block;font-style:normal;font-size:11.5px;font-weight:400;color:var(--mut);letter-spacing:0;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+			& ".chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}"
+			& ".mas{opacity:.8;font-size:18px;line-height:1;letter-spacing:-1px;transform:rotate(90deg)}"
+			& ".big{display:flex;align-items:baseline;gap:8px;margin-top:6px;white-space:nowrap}.card>.big{margin-bottom:auto}"
+			& ".big b{font-size:52px;font-weight:300;letter-spacing:-.045em;line-height:.9;font-variant-numeric:tabular-nums}"
+			& ".big u{text-decoration:none;font-size:22px;font-weight:400;letter-spacing:-.02em;margin-left:-4px}.big i{font-style:normal;font-size:14px;color:var(--mut)}"
+			& ".bdg{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:5px 10px;background:var(--lime);align-self:center;margin-left:auto;white-space:nowrap}"
+			& ".bdg.mal{background:#FBE0D8;color:#B8361B}.bdg.neu{background:rgba(255,255,255,.6)}.bdg.neg{background:var(--ink);color:var(--lime)}.bdg svg{width:13px;height:13px}"
+			& ".caps{display:flex;gap:7px;margin-top:10px}.cap{flex:1;height:34px;border-radius:999px}.cap.f{background:var(--ink)}.cap.v{border:1.4px dashed var(--fai)}"
+			& ".cap.f{animation:ap .5s cubic-bezier(.2,.8,.2,1) both}.cap:nth-child(2){animation-delay:.04s}.cap:nth-child(3){animation-delay:.08s}.cap:nth-child(4){animation-delay:.12s}.cap:nth-child(5){animation-delay:.16s}.cap:nth-child(6){animation-delay:.2s}.cap:nth-child(7){animation-delay:.24s}.cap:nth-child(8){animation-delay:.28s}.cap:nth-child(9){animation-delay:.32s}.cap:nth-child(10){animation-delay:.36s}@keyframes ap{from{opacity:0;transform:scale(.6)}}"
+			& ".pie{margin-top:9px;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+			& ".lima{background:var(--lime)}.lima .chip{border-color:transparent}.lima .cap.v{border-color:rgba(22,22,22,.35)}.lima .big i,.lima .pie{color:rgba(22,22,22,.62)}"
+			& ".cc{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}.cc.ap{opacity:.28}"
+			& ".tr{width:22px;height:60px;border-radius:999px;border:1.3px dashed var(--fai);position:relative}"
+			& ".tr i{position:absolute;left:3px;right:3px;bottom:3px;min-height:13px;max-height:calc(100% - 6px);border-radius:999px;background:var(--ink);transform-origin:bottom;animation:sube .9s cubic-bezier(.2,.8,.2,1) both}"
+			& ".tr i.l{background:var(--lime);box-shadow:inset 0 0 0 1.4px var(--ink)}.tr i.o{display:none}"
+			& ".cc span{font-size:10.5px;color:var(--ink2);margin-top:4px;white-space:nowrap}.cc em{font-style:normal;font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums}"
+			& "@keyframes sube{from{transform:scaleY(0)}}@keyframes crece{from{transform:scaleX(0)}}"
+			& ".tres{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:8px;margin-top:10px}.mi{background:#fff;border-radius:18px;padding:6px 12px 7px;white-space:nowrap}"
+			& ".mi b{font-size:20px;font-weight:500;line-height:1.25;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.mi s{text-decoration:none;font-size:11px;font-weight:600;margin-left:6px;color:#4E6B00}"
+			& ".mi s.m{color:#B8361B}.mi span{display:block;font-size:11px;line-height:1.2;color:var(--mut);margin-top:1px}"
+			& ".osc{background:#161616;color:#fff;padding:18px 22px}.osc .et{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#A3A79F;gap:10px}"
+			& ".pto{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--coral);margin-right:8px;animation:pulso 1.6s infinite}"
+			& "@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(239,90,60,.7)}70%{box-shadow:0 0 0 9px rgba(239,90,60,0)}100%{box-shadow:0 0 0 0 rgba(239,90,60,0)}}"
+			& ".flc{width:36px;height:36px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;flex:none;color:#161616}.flc svg{width:17px;height:17px}"
+			& ".h1{font-size:26px;font-weight:400;letter-spacing:-.03em;line-height:1.08;margin-top:2px}.osc>.h1{margin-bottom:auto}.h1 span{color:var(--lime)}"
+			& ".osc .caps{margin-top:12px;gap:6px}.osc .cap{height:24px}.osc .cap.f{background:var(--lime)}.osc .cap.v{border-color:#5A5D57}"
+			& ".osc .cap.p{background:linear-gradient(90deg,var(--lime) var(--p),transparent var(--p));border:1.4px dashed #5A5D57}"
+			& ".fr{display:flex;justify-content:space-between;font-size:11.5px;color:#8D918A;margin-top:6px}"
+			& ".bt{display:flex;align-items:center;justify-content:space-between;background:#fff;color:#161616;border-radius:999px;padding:9px 12px 9px 20px;margin-top:12px;font-size:14px;font-weight:500;white-space:nowrap}"
+			& ".bt b{font-weight:700}.bt svg{width:15px;height:15px}"
+			& ".fx{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;height:100%}.fx .card{display:block;padding:14px 16px;border-radius:24px}"
+			& ".fx .top{display:flex;justify-content:space-between;align-items:flex-start}.fx .chip{width:36px;height:36px;border-radius:12px}"
+			& ".fx b{display:block;font-size:34px;font-weight:300;letter-spacing:-.04em;margin-top:6px;line-height:1;font-variant-numeric:tabular-nums}.fx span{font-size:12px;color:var(--ink2)}"
+			& ".fx em{font-style:normal;font-size:10.5px;font-weight:600;border-radius:999px;padding:3px 8px;background:#fff;color:var(--ink2);border:1px solid var(--lin)}"
+			& ".al{display:flex;flex-direction:column;gap:8px;height:100%}.ca{background:var(--card);border-radius:24px;padding:16px 18px}"
+			& ".res{display:flex;align-items:baseline;gap:10px;margin-top:10px}.res b{font-size:44px;font-weight:300;letter-spacing:-.045em;line-height:1}.res .rl{font-size:13px;color:var(--ink2);line-height:1.25}"
+			& ".it{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:20px;padding:10px 14px 10px 10px}"
+			& ".ini{width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;position:relative;flex:none}"
+			& ".ini i{position:absolute;right:-3px;top:-3px;width:11px;height:11px;border-radius:50%;border:2px solid var(--card)}"
+			& ".it .tx{flex:1;min-width:0}.t1{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+			& ".ct{font-size:10.5px;font-weight:500;color:var(--ink2);background:#fff;border:1px solid var(--lin);border-radius:999px;padding:1px 7px;margin-left:7px;vertical-align:1px}"
+			& ".t2{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}"
+			& ".dd{font-size:12px;font-weight:600;border-radius:999px;padding:4px 9px;white-space:nowrap}.dd.rot{background:var(--ink);color:var(--lime)}.dd.ret{background:#fff;border:1px solid var(--lin)}"
+			& ".ok{font-size:13px;color:var(--ink2)}"
+			& ".vp{background:rgba(255,255,255,.82);border:1px solid var(--lin);border-radius:22px;padding:14px 14px 6px}"
+			& ".vp .h{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600;margin-bottom:6px}.vp .h em{font-style:normal;font-size:11px;color:var(--mut);font-weight:400}"
+			& ".vr{padding:7px 0 8px;border-top:1px solid var(--lin)}.vr .n{display:flex;justify-content:space-between;font-size:12.5px;font-weight:500;white-space:nowrap}.vr .n b{font-weight:600;font-variant-numeric:tabular-nums}"
+			& ".vr .bar{height:8px;border-radius:999px;border:1px dashed var(--fai);margin:6px 0 4px;position:relative}"
+			& ".vr .bar i{position:absolute;left:-1px;top:-1px;bottom:-1px;border-radius:999px;background:var(--ink);transform-origin:left;animation:crece .9s cubic-bezier(.2,.8,.2,1) both}"
+			& ".vr .bar i.l{background:var(--lime);box-shadow:inset 0 0 0 1px var(--ink)}.vr .s{font-size:11px;color:var(--mut)}.vr .s s{text-decoration:none;color:#B8361B;font-weight:600}"
+			& ".vr.cerr .n{color:#B8361B}.cz{font-size:10px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--coral);border-radius:999px;padding:2px 7px}"
+			& ".ley{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--ink2);white-space:nowrap}.ley i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}"
+			& ".sel{background:#fff;border:1px solid var(--lin);border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:500;white-space:nowrap}"
+			& ".tot{font-size:12px;color:var(--mut)}.tot b{color:var(--ink);font-weight:600}"
+			& "svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}"
+			& ".ly{display:flex;justify-content:center;align-items:center;gap:6px;height:100%}"
+			& ".ly span{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink2);background:#fff;border:1px solid var(--lin);border-radius:999px;padding:5px 11px;white-space:nowrap}"
+			& ".ly .a{width:9px;height:9px;border-radius:50%}.ly .ra{width:18px;height:4px;border-radius:2px;background:#161616;box-shadow:0 0 0 2.5px var(--lime)}"
+			& ".ly .rp{width:18px;border-top:1.6px dashed #A3A79F}.ly .rc{width:11px;height:11px;border-radius:50%;border:1.6px dashed var(--coral)}"
+			& ".cab{display:flex;justify-content:space-between;align-items:flex-start;height:100%}"
+			& ".ti{font-size:50px;font-weight:400;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}"
+			& ".pl{display:inline-flex;align-items:center;justify-content:center;width:62px;height:40px;border-radius:999px;vertical-align:6px;margin:0 6px}.pl svg{width:21px;height:21px}"
+			& ".pl.g{background:#fff;border:1px solid var(--lin)}.pl.l{background:var(--lime)}.der{display:flex;align-items:center;gap:10px;margin-top:22px}"
+			& ".fe{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--lin);border-radius:999px;padding:7px 18px 7px 8px}"
+			& ".fe .ci{width:34px;height:34px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center}.fe .ci svg{width:17px;height:17px}"
+			& ".fe b{display:block;font-size:14px;font-weight:600}.fe span{display:block;font-size:11.5px;color:var(--mut)}.fe b::first-letter,.fe span::first-letter{text-transform:uppercase}"
+			& ".fic{font-size:11.5px;font-weight:600;border-radius:999px;padding:9px 14px;border:1px dashed var(--fai);color:var(--ink2);white-space:nowrap}"
+			& ".lat{background:#161616;border-radius:26px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 0}"
+			& ".logo{width:48px;height:48px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:26px;color:#161616}.logo svg{width:24px;height:24px}"
+			& ".lb{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:5px 0;color:#9A9E97}.lb svg{width:21px;height:21px}.lb.a{background:#2E2F2D;color:#fff}"
+			& ".sp{flex:1}.av{width:48px;height:48px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.02em;margin-top:8px;color:#161616}"
+			& ".lb.al{background:var(--coral);color:#fff}.bt.on{background:var(--lime)}"
+			& ".pn{position:relative;margin:14px;height:calc(100% - 28px);background:#fff;border:1px solid var(--lin);border-radius:28px;padding:22px 26px;box-shadow:0 4px 10px rgba(22,22,22,.10);display:flex;flex-direction:column;overflow:hidden}"
+			& ".ph{display:flex;align-items:center;gap:14px;padding-right:56px}.ph .tt{font-size:22px;font-weight:400;letter-spacing:-.03em;flex:1;min-width:0}.ph .tt em{display:block;font-style:normal;font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+			& ".pn .x{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--lin);display:flex;align-items:center;justify-content:center}.pn .x svg{width:16px;height:16px}"
+			& ".pk{display:flex;gap:8px;margin-top:16px}.pk div{background:var(--card);border-radius:16px;padding:8px 16px 9px}.pk b{font-size:22px;font-weight:400;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.pk span{display:block;font-size:11px;color:var(--mut)}.pk .lima span{color:rgba(22,22,22,.62)}"
+			& ".tb{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px}.tb th{text-align:left;font-weight:500;color:var(--mut);font-size:11px;padding:0 10px 7px;border-bottom:1px solid var(--lin);white-space:nowrap}"
+			& ".tb td{padding:6px 10px;border-bottom:1px solid var(--lin);white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}.tb .n{text-align:right;font-variant-numeric:tabular-nums}.tb td:first-child,.tb th:first-child{padding-left:0}.tb td:last-child,.tb th:last-child{padding-right:0}"
+			& ".tb .gr{color:var(--mut)}.tb tr.cerr td{color:#B8361B}.mb{display:inline-block;width:64px;height:6px;border-radius:999px;background:var(--lin);vertical-align:middle;margin-right:8px;position:relative;overflow:hidden}.mb i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--ink)}.mb i.l{background:#9DB300}"
+			& ".dd.am{background:#FCEBC8;color:#8A5A00}.dd.co{background:#FBE0D8;color:#B8361B}.dd.pl{background:var(--card);color:var(--mut);font-weight:500}"
+			& ".pf{margin-top:auto;padding-top:10px;font-size:11.5px;color:var(--mut)}"
+			& ".ay{display:grid;grid-template-columns:1fr 1fr;gap:16px 30px;margin-top:20px}.ay>div{display:flex;gap:12px;align-items:flex-start}.ay b{display:block;font-size:13.5px;font-weight:600;margin-bottom:3px}.ay span{font-size:12px;color:var(--ink2);line-height:1.45}.ay .chip{width:34px;height:34px;border-radius:11px}.ay .chip svg{width:17px;height:17px}"
+			& ".cl{position:absolute;left:26px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}.vd{position:absolute;left:26px;right:26px;bottom:20px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);gap:16px}.vd b{color:var(--ink);font-weight:600}"
+			& ".fx em{display:inline-flex;align-items:center;gap:4px}.fx em svg{width:12px;height:12px}"
+			& ".ly .pv{width:9px;height:9px;transform:rotate(45deg);background:#F3A3C6;border:1.2px solid #161616;border-radius:1px}"
+			& ".ly{gap:5px}.ly span{padding:5px 10px}"
+		displayFolder: 7 · HTML
+		lineageTag: 90601118-9575-5c3b-b59c-3fd176766816
+
+	/// Barra lateral de la Torre: menú de páginas (globo, barco, avión, camión), calendario y ayuda. Los botones nativos van encima.
+	measure 'HTML · Barra lateral' =
+			"<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.lat{background:#161616;border-radius:26px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 0}.logo{width:48px;height:48px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:26px;color:#161616}.logo svg{width:24px;height:24px}.lb{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:5px 0;color:#9A9E97}.lb svg{width:21px;height:21px}.lb.a{background:#2E2F2D;color:#fff}.sp{flex:1}.av{width:48px;height:48px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.02em;margin-top:8px;color:#161616}"
+			 & "</style><div class='t'>" & "<div class='lat'><div class='logo'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb a'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c.9 0 1.4 1.2 1.4 2.6v4.2l7.1 4.1v1.8l-7.1-2.1v3.6l2.2 1.6V20L12 19l-3.6 1v-1.2l2.2-1.6v-3.6l-7.1 2.1v-1.8l7.1-4.1V5.6C10.6 4.2 11.1 3 12 3z'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 7h11v9h-11z'/><path d='M13.5 10h4l3 3v3h-7'/><circle cx='6.5' cy='17.5' r='1.8'/><circle cx='17' cy='17.5' r='1.8'/></svg></div><div class='sp'></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6M12 16.8v.3'/></svg></div><div class='av'>CD</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 82ecbcab-9549-5c1a-ae83-2269dc41c3b6
+
+	/// Valor en tránsito a mediodía frente a la base, con una cápsula por categoría.
+	measure 'HTML · En tránsito' =
+			VAR caja = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='6' width='18' height='12' rx='2'/><path d='M7.5 6v12M12 6v12M16.5 6v12'/></svg>"
+			VAR flecha = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17 17 7M9 7h8v8'/></svg>"
+			VAR esBase = [Escenario elegido] = "Base"
+			VAR v = COALESCE ( [Valor en tránsito (€)], 0 )
+			VAR vb = COALESCE ( [Valor en tránsito (Base)], 0 )
+			VAR d = DIVIDE ( v - vb, vb )
+			VAR cargas = COALESCE ( [Envíos en tránsito], 0 )
+			VAR retr = COALESCE ( [Envíos retrasados en tránsito], 0 )
+			VAR elegidas = VALUES ( 'Categorías'[Categoría] )
+			VAR filtrado = ISFILTERED ( 'Categorías' )
+			VAR cats = ADDCOLUMNS ( ALL ( 'Categorías'[Categoría], 'Categorías'[Nombre corto], 'Categorías'[Orden] ), "@v", COALESCE ( [Valor en tránsito (€)], 0 ) )
+			VAR mx = MAXX ( cats, [@v] )
+			VAR mayor = MAXX ( TOPN ( 1, cats, [@v], DESC ), 'Categorías'[Categoría] )
+			VAR barras =
+			    CONCATENATEX (
+			        cats,
+			        "<div class='cc" & IF ( filtrado && NOT ( 'Categorías'[Categoría] IN elegidas ), " ap" ) & "' title='" & 'Categorías'[Categoría] & "'><div class='tr'><i class='"
+			            & IF ( [@v] <= 0, "o", IF ( 'Categorías'[Categoría] = mayor, "l" ) ) & "' style='height:" & FORMAT ( DIVIDE ( [@v], mx ) * 100, "0.0", "en-US" ) & "%'></i></div><span>"
+			            & VAR nc = 'Categorías'[Nombre corto] RETURN IF ( LEN ( nc ) > 9, LEFT ( nc, 7 ) & ".", nc ) & "</span><em>" & FORMAT ( [@v] / 1000000, "0.0", "es-ES" ) & "</em></div>",
+			        "", 'Categorías'[Orden], ASC
+			    )
+			VAR badge =
+			    IF ( esBase || vb = 0, "",
+			        "<span class='bdg" & IF ( d > 0.02, " mal" ) & "'>" & flecha & IF ( d > 0, "+" ) & FORMAT ( d * 100, "0", "es-ES" ) & " %</span>" )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.card{position:relative;background:var(--card);border-radius:28px;padding:18px 20px;height:100%;overflow:hidden;display:flex;flex-direction:column}.hd{display:flex;align-items:center;gap:12px}.hd .tt{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}.hd .tt em{display:block;font-style:normal;font-size:11.5px;font-weight:400;color:var(--mut);letter-spacing:0;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.mas{opacity:.8;font-size:18px;line-height:1;letter-spacing:-1px;transform:rotate(90deg)}.big{display:flex;align-items:baseline;gap:8px;margin-top:6px;white-space:nowrap}.card>.big{margin-bottom:auto}.big b{font-size:52px;font-weight:300;letter-spacing:-.045em;line-height:.9;font-variant-numeric:tabular-nums}.big u{text-decoration:none;font-size:22px;font-weight:400;letter-spacing:-.02em;margin-left:-4px}.big i{font-style:normal;font-size:14px;color:var(--mut)}.bdg{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:5px 10px;background:var(--lime);align-self:center;margin-left:auto;white-space:nowrap}.bdg.mal{background:#FBE0D8;color:#B8361B}.bdg svg{width:13px;height:13px}.caps{display:flex;gap:7px;margin-top:1"
+			& "0px}.cc{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}.cc.ap{opacity:.28}.tr{width:22px;height:60px;border-radius:999px;border:1.3px dashed var(--fai);position:relative}.tr i{position:absolute;left:3px;right:3px;bottom:3px;min-height:13px;max-height:calc(100% - 6px);border-radius:999px;background:var(--ink);transform-origin:bottom;animation:sube .9s cubic-bezier(.2,.8,.2,1) both}.tr i.l{background:var(--lime);box-shadow:inset 0 0 0 1.4px var(--ink)}.tr i.o{display:none}.cc span{font-size:10.5px;color:var(--ink2);margin-top:4px;white-space:nowrap}.cc em{font-style:normal;font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}@keyframes ap{from{opacity:0;transform:scale(.6)}}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='card'><div class='hd'><div class='chip'>" & caja & "</div><div class='tt'>En tránsito hoy<em>"
+			        & FORMAT ( cargas, "#,0", "es-ES" ) & IF ( cargas = 1, " carga, ", " cargas, " ) & FORMAT ( retr, "#,0", "es-ES" ) & " con retraso · M€ por categoría</em></div><div class='mas'>···</div></div>"
+			        & "<div class='big'><b>" & FORMAT ( v / 1000000, "0.0", "es-ES" ) & "</b><u>M€</u>" & IF ( NOT esBase, "<i>/ " & FORMAT ( vb / 1000000, "0.0", "es-ES" ) & " base</i>" ) & badge & "</div>"
+			        & "<div class='caps'>" & barras & "</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: b2c51bc2-f737-5248-a1a6-df63a1fb9dfb
+
+	/// Parte del valor en tránsito que depende de la vía más cargada, en diez cápsulas.
+	measure 'HTML · Exposición' =
+			VAR ruta = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='6' cy='18' r='2'/><circle cx='18' cy='6' r='2'/><path d='M8 18h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16'/></svg>"
+			VAR aro = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8' stroke-opacity='.25'/><path d='M12 4a8 8 0 0 1 8 8'/></svg>"
+			VAR t = [Momento]
+			VAR valor = COALESCE ( [Valor en tránsito (€)], 0 )
+			VAR vias =
+			    ADDCOLUMNS (
+			        CALCULATETABLE ( VALUES ( Envios[Vía] ), Envios[Salida] <= t, Envios[Entrega] > t ),
+			        "@v", CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Salida] <= t, Envios[Entrega] > t )
+			    )
+			VAR viaTop = MAXX ( TOPN ( 1, vias, [@v], DESC ), Envios[Vía] )
+			VAR vTop = COALESCE ( MAXX ( vias, [@v] ), 0 )
+			VAR pct = DIVIDE ( vTop, valor )
+			VAR n = ROUND ( pct * 10, 0 )
+			VAR nombre = SWITCH ( viaTop, "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", viaTop )
+			VAR caps = CONCATENATEX ( GENERATESERIES ( 1, 10, 1 ), "<div class='cap " & IF ( [Value] <= n, "f", "v" ) & "'></div>", "", [Value], ASC )
+			VAR otras =
+			    CONCATENATEX (
+			        TOPN ( 2, FILTER ( vias, Envios[Vía] <> viaTop ), [@v], DESC ),
+			        SWITCH ( Envios[Vía], "Europa", "Carretera", "Aérea", "Avión", Envios[Vía] ) & " " & FORMAT ( DIVIDE ( [@v], valor ), "0 %", "es-ES" ),
+			        " · ", [@v], DESC
+			    )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.card{position:relative;background:var(--card);border-radius:28px;padding:18px 20px;height:100%;overflow:hidden;display:flex;flex-direction:column}.hd{display:flex;align-items:center;gap:12px}.hd .tt{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}.hd .tt em{display:block;font-style:normal;font-size:11.5px;font-weight:400;color:var(--mut);letter-spacing:0;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.mas{opacity:.8;font-size:18px;line-height:1;letter-spacing:-1px;transform:rotate(90deg)}.big{display:flex;align-items:baseline;gap:8px;margin-top:6px;white-space:nowrap}.card>.big{margin-bottom:auto}.big b{font-size:52px;font-weight:300;letter-spacing:-.045em;line-height:.9;font-variant-numeric:tabular-nums}.big u{text-decoration:none;font-size:22px;font-weight:400;letter-spacing:-.02em;margin-left:-4px}.big i{font-style:normal;font-size:14px;color:var(--mut)}.bdg{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:5px 10px;background:var(--lime);align-self:center;margin-left:auto;white-space:nowrap}.bdg.neu{background:rgba(255,255,255,.6)}.bdg svg{width:13px;height:13px}.caps{display:flex;gap:7px;margin-top:10"
+			& "px}.cap{flex:1;height:34px;border-radius:999px}.cap.f{background:var(--ink)}.cap.v{border:1.4px dashed var(--fai)}.cap.f{animation:ap .5s cubic-bezier(.2,.8,.2,1) both}.cap:nth-child(2){animation-delay:.04s}.cap:nth-child(3){animation-delay:.08s}.cap:nth-child(4){animation-delay:.12s}.cap:nth-child(5){animation-delay:.16s}.cap:nth-child(6){animation-delay:.2s}.cap:nth-child(7){animation-delay:.24s}.cap:nth-child(8){animation-delay:.28s}.cap:nth-child(9){animation-delay:.32s}.cap:nth-child(10){animation-delay:.36s}.pie{margin-top:9px;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lima{background:var(--lime)}.lima .chip{border-color:transparent}.lima .cap.v{border-color:rgba(22,22,22,.35)}.lima .big i,.lima .pie{color:rgba(22,22,22,.62)}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}@keyframes ap{from{opacity:0;transform:scale(.6)}}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='card lima'><div class='hd'><div class='chip'>" & ruta & "</div><div class='tt'>Exposición por vía<em>valor en tránsito que depende de una sola ruta</em></div><div class='mas'>···</div></div>"
+			        & IF ( valor <= 0,
+			            "<div class='pie' style='margin-top:30px'>No hay mercancía en tránsito con estos filtros.</div>",
+			            "<div class='big'><b>" & FORMAT ( pct * 100, "0", "es-ES" ) & "</b><u>%</u><i>/ " & nombre & "</i>"
+			                & "<span class='bdg neu'>" & aro & FORMAT ( vTop / 1000000, "0.0", "es-ES" ) & " M€</span></div>"
+			                & "<div class='caps'>" & caps & "</div><div class='pie'>" & IF ( otras = "", "Todo el valor va por una sola vía.", otras ) & "</div>"
+			        ) & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 9f553751-4d07-584f-b930-6245ccdb4be3
+
+	/// Retraso previsto de lo que está en tránsito, con puntualidad, retraso entregado y flete de 30 días.
+	measure 'HTML · Servicio' =
+			VAR reloj = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3.5 2'/></svg>"
+			VAR flecha = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17 17 7M9 7h8v8'/></svg>"
+			VAR esBase = [Escenario elegido] = "Base"
+			VAR r = COALESCE ( [Retraso en tránsito (días)], 0 )
+			VAR rb = COALESCE ( [Retraso en tránsito (Base)], 0 )
+			VAR d = r - rb
+			VAR punt = COALESCE ( [Puntualidad %], 0 )
+			VAR puntB = COALESCE ( [Puntualidad (Base)], 0 )
+			VAR dp = ( punt - puntB ) * 100
+			VAR rm = COALESCE ( [Retraso medio (días)], 0 )
+			VAR dr = rm - COALESCE ( [Retraso medio (Base)], 0 )
+			VAR fl = COALESCE ( [Flete (30 días)], 0 )
+			VAR flB = [Flete (Base)]
+			VAR dfl = DIVIDE ( fl - flB, flB )
+			VAR badge = IF ( esBase || ABS ( d ) < 0.05, "", "<span class='bdg" & IF ( d > 0.5, " mal" ) & "'>" & flecha & IF ( d > 0, "+" ) & FORMAT ( d, "0.0", "es-ES" ) & " d</span>" )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.card{position:relative;background:var(--card);border-radius:28px;padding:18px 20px;height:100%;overflow:hidden;display:flex;flex-direction:column}.hd{display:flex;align-items:center;gap:12px}.hd .tt{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:0}.hd .tt em{display:block;font-style:normal;font-size:11.5px;font-weight:400;color:var(--mut);letter-spacing:0;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.mas{opacity:.8;font-size:18px;line-height:1;letter-spacing:-1px;transform:rotate(90deg)}.big{display:flex;align-items:baseline;gap:8px;margin-top:6px;white-space:nowrap}.card>.big{margin-bottom:auto}.big b{font-size:52px;font-weight:300;letter-spacing:-.045em;line-height:.9;font-variant-numeric:tabular-nums}.big u{text-decoration:none;font-size:22px;font-weight:400;letter-spacing:-.02em;margin-left:-4px}.big i{font-style:normal;font-size:14px;color:var(--mut)}.bdg{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:5px 10px;background:var(--lime);align-self:center;margin-left:auto;white-space:nowrap}.bdg.mal{background:#FBE0D8;color:#B8361B}.bdg svg{width:13px;height:13px}.tres{display:grid;grid-template-column"
+			& "s:1fr 1fr 1.25fr;gap:8px;margin-top:10px}.mi{background:#fff;border-radius:18px;padding:6px 12px 7px;white-space:nowrap}.mi b{font-size:20px;font-weight:500;line-height:1.25;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.mi s{text-decoration:none;font-size:11px;font-weight:600;margin-left:6px;color:#4E6B00}.mi s.m{color:#B8361B}.mi span{display:block;font-size:11px;line-height:1.2;color:var(--mut);margin-top:1px}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='card'><div class='hd'><div class='chip'>" & reloj & "</div><div class='tt'>Retraso en tránsito<em>media de lo que aún no ha llegado</em></div><div class='mas'>···</div></div>"
+			        & "<div class='big'><b>" & FORMAT ( r, "0.0", "es-ES" ) & "</b><u>días</u>" & IF ( NOT esBase, "<i>/ " & FORMAT ( rb, "0.0", "es-ES" ) & " base</i>" ) & badge & "</div>"
+			        & "<div class='tres'>"
+			        & "<div class='mi'><b>" & FORMAT ( punt, "0 %", "es-ES" ) & "</b>"
+			            & IF ( NOT esBase && ABS ( dp ) >= 0.5, "<s class='" & IF ( dp < 0, "m" ) & "'>" & IF ( dp > 0, "+" ) & FORMAT ( dp, "0", "es-ES" ) & " pp</s>" ) & "<span>puntualidad 30 d</span></div>"
+			        & "<div class='mi'><b>" & FORMAT ( rm, "0.0", "es-ES" ) & " d</b>"
+			            & IF ( NOT esBase && ABS ( dr ) >= 0.05, "<s class='" & IF ( dr > 0, "m" ) & "'>" & IF ( dr > 0, "+" ) & FORMAT ( dr, "0.0", "es-ES" ) & "</s>" ) & "<span>retraso entregado</span></div>"
+			        & "<div class='mi'><b>" & FORMAT ( fl / 1000, "#,0", "es-ES" ) & " mil €</b>"
+			            & IF ( NOT esBase && ABS ( dfl ) >= 0.005, "<s class='" & IF ( dfl > 0, "m" ) & "'>" & IF ( dfl > 0, "+" ) & FORMAT ( dfl * 100, "0", "es-ES" ) & " %</s>" ) & "<span>flete 30 días</span></div>"
+			        & "</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 68d82c19-6b14-5d8f-bc8a-5a23e53b129e
+
+	/// Tarjeta negra del escenario: el cierre activo, su avance por semanas y las cargas desviadas.
+	measure 'HTML · Escenario' =
+			VAR cerrar = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 6.5l11 11M17.5 6.5l-11 11'/></svg>"
+			VAR flecha = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17 17 7M9 7h8v8'/></svg>"
+			VAR play = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M8 5.5v13l10.5-6.5z'/></svg>"
+			VAR meses = "ene feb mar abr may jun jul ago sep oct nov dic "
+			VAR esc = [Escenario elegido]
+			VAR hoy = [Fecha elegida]
+			VAR t = [Momento]
+			VAR cierres = CALCULATETABLE ( Incidencias, Incidencias[Tipo] = "Cierre" )
+			VAR c1 = TOPN ( 1, cierres, Incidencias[Desde], ASC )
+			VAR desde = MAXX ( c1, Incidencias[Desde] )
+			VAR hasta = MAXX ( c1, Incidencias[Hasta] )
+			VAR lugar = SUBSTITUTE ( MAXX ( c1, Incidencias[Incidencia] ), "Cierre · ", "" )
+			VAR total = INT ( hasta - desde ) + 1
+			VAR dia = INT ( hoy - desde ) + 1
+			VAR semanas = MAX ( ROUNDUP ( total / 7, 0 ), 1 )
+			VAR hecho = DIVIDE ( MIN ( MAX ( dia, 0 ), total ), total ) * semanas
+			VAR caps =
+			    CONCATENATEX (
+			        GENERATESERIES ( 1, semanas, 1 ),
+			        IF ( [Value] <= hecho, "<div class='cap f'></div>",
+			            IF ( [Value] - 1 < hecho, "<div class='cap p' style='--p:" & FORMAT ( ( hecho - [Value] + 1 ) * 100, "0", "en-US" ) & "%'></div>", "<div class='cap v'></div>" ) ),
+			        "", [Value], ASC
+			    )
+			VAR alts = FILTER ( ALL ( Rutas[Alternativa] ), Rutas[Alternativa] <> "" )
+			VAR nAlt = COALESCE ( CALCULATE ( COUNTROWS ( Envios ), Envios[Salida] <= t, Envios[Entrega] > t, TREATAS ( alts, Envios[RutaID] ) ), 0 )
+			VAR viaAlt = MAXX ( FILTER ( ALL ( Rutas[RutaID], Rutas[Vía] ), Rutas[RutaID] IN alts ), Rutas[Vía] )
+			VAR porAlt = IF ( viaAlt = "Cabo", "el Cabo", "la vía " & viaAlt )
+			VAR cong = COUNTROWS ( CALCULATETABLE ( Incidencias, Incidencias[Tipo] = "Congestión", Incidencias[Desde] <= hoy, Incidencias[Hasta] >= hoy ) )
+			VAR fd = IF ( NOT ISBLANK ( desde ), DAY ( desde ) & " " & TRIM ( MID ( meses, ( MONTH ( desde ) - 1 ) * 4 + 1, 4 ) ) )
+			VAR fh = IF ( NOT ISBLANK ( hasta ), DAY ( hasta ) & " " & TRIM ( MID ( meses, ( MONTH ( hasta ) - 1 ) * 4 + 1, 4 ) ) )
+			VAR estado = IF ( ISBLANK ( desde ), 0, IF ( hoy < desde, 1, IF ( hoy <= hasta, 2, 3 ) ) )
+			VAR otro = CALCULATE ( MIN ( Escenarios[Escenario] ), FILTER ( ALL ( Escenarios[Escenario] ), Escenarios[Escenario] <> "Base" ) )
+			VAR semana = MIN ( INT ( ( dia - 1 ) / 7 ) + 1, semanas )
+			VAR etiqueta =
+			    SWITCH ( estado,
+			        1, "Escenario simulado · empieza en " & INT ( desde - hoy ) & " días",
+			        2, IF ( cong > 0, "Congestión en " & cong & " puertos · ", "Escenario simulado · " ) & "semana " & semana & " de " & semanas,
+			        3, IF ( cong > 0, "Congestión en " & cong & " puertos · reabierto", "Escenario simulado · reabierto" ),
+			        "Escenario" )
+			VAR titulo =
+			    SWITCH ( estado,
+			        1, lugar & " abierto<br><span>cierra el " & fd & "</span>",
+			        2, lugar & " cerrado<br><span>día " & dia & " de " & total & "</span>",
+			        3, lugar & " reabierto<br><span>hace " & INT ( hoy - hasta ) & " días</span>",
+			        "Operación normal<br><span>sin incidencias</span>" )
+			VAR soloDesv = ISFILTERED ( 'Foco desvío' )
+			VAR boton =
+			    SWITCH ( estado,
+			        0, IF ( otro <> "", "<span>Pulsa la flecha para ver <b>" & otro & "</b></span>", "<span>Sin escenarios de incidencia</span>" ),
+			        IF ( nAlt > 0,
+			            IF ( soloDesv,
+			                "<span>En el globo, solo las <b>" & nAlt & IF ( nAlt = 1, " carga</b> desviada", " cargas</b> desviadas" ) & "</span>",
+			                "<span><b>" & nAlt & IF ( nAlt = 1, " carga</b> desviada por ", " cargas</b> desviadas por " ) & porAlt & "</span>" ),
+			            "<span>Ninguna carga desviada en tránsito</span>" ) )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.card{position:relative;background:var(--card);border-radius:28px;padding:18px 20px;height:100%;overflow:hidden;display:flex;flex-direction:column}.caps{display:flex;gap:7px;margin-top:10px}.cap{flex:1;height:34px;border-radius:999px}.cap.f{background:var(--ink)}.cap.v{border:1.4px dashed var(--fai)}.cap.f{animation:ap .5s cubic-bezier(.2,.8,.2,1) both}.cap:nth-child(2){animation-delay:.04s}.cap:nth-child(3){animation-delay:.08s}.cap:nth-child(4){animation-delay:.12s}.cap:nth-child(5){animation-delay:.16s}.cap:nth-child(6){animation-delay:.2s}.cap:nth-child(7){animation-delay:.24s}.cap:nth-child(8){animation-delay:.28s}.cap:nth-child(9){animation-delay:.32s}.cap:nth-child(10){animation-delay:.36s}.osc{background:#161616;color:#fff;padding:18px 22px}.osc .et{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#A3A79F;gap:10px}.pto{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--coral);margin-right:8px;animation:pulso 1.6s infinite}.flc{width:36px;height:36px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;flex:none;color:#161616}.flc svg{width:17px;height:17px}.h1{font-size:26px;font-weight:400;letter-spacing:-.03em;line-height:1.08;margin-top:2px}.osc>.h1{margin-bottom:auto}.h1 span{color:var(--lime)}.osc .caps{margin-top:12px;gap:6px}.osc .cap{height:24px}.osc .cap.f{background:var(--lime)}"
+			& ".osc .cap.v{border-color:#5A5D57}.osc .cap.p{background:linear-gradient(90deg,var(--lime) var(--p),transparent var(--p));border:1.4px dashed #5A5D57}.fr{display:flex;justify-content:space-between;font-size:11.5px;color:#8D918A;margin-top:6px}.bt{display:flex;align-items:center;justify-content:space-between;background:#fff;color:#161616;border-radius:999px;padding:9px 12px 9px 20px;margin-top:12px;font-size:14px;font-weight:500;white-space:nowrap}.bt b{font-weight:700}.bt svg{width:15px;height:15px}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.bt.on{background:var(--lime)}@keyframes ap{from{opacity:0;transform:scale(.6)}}@keyframes sube{from{transform:scaleY(0)}}@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(239,90,60,.7)}70%{box-shadow:0 0 0 9px rgba(239,90,60,0)}100%{box-shadow:0 0 0 0 rgba(239,90,60,0)}}"
+			 & "</style><div class='t'>" & "<div class='card osc'><div class='et'><span>" & IF ( estado = 2, "<span class='pto'></span>" ) & etiqueta & "</span><div class='flc'>" & flecha & "</div></div>"
+			        & "<div class='h1'>" & titulo & "</div>"
+			        & IF ( estado > 0, "<div class='caps'>" & caps & "</div><div class='fr'><span>" & fd & "</span><span>reabre el " & fh & "</span></div>", "<div style='height:52px'></div>" )
+			        & "<div class='bt" & IF ( soloDesv, " on" ) & "'>" & boton & IF ( soloDesv, cerrar, play ) & "</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 38ffa6ca-9161-5a62-916b-94fb06b38391
+
+	/// Buques, vuelos y camiones en ruta el día elegido.
+	measure 'HTML · Fichas' =
+			VAR b = COALESCE ( [Buques en el mar], 0 )
+			VAR f = COALESCE ( [Buques fondeados], 0 )
+			VAR a = COALESCE ( [Vuelos en el aire], 0 )
+			VAR c = COALESCE ( [Camiones en ruta], 0 )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.card{position:relative;background:var(--card);border-radius:28px;padding:18px 20px;height:100%;overflow:hidden;display:flex;flex-direction:column}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.fx{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;height:100%}.fx .card{display:block;padding:14px 16px;border-radius:24px}.fx .top{display:flex;justify-content:space-between;align-items:flex-start}.fx .chip{width:36px;height:36px;border-radius:12px}.fx b{display:block;font-size:34px;font-weight:300;letter-spacing:-.04em;margin-top:6px;line-height:1;font-variant-numeric:tabular-nums}.fx span{font-size:12px;color:var(--ink2)}.fx em{font-style:normal;font-size:10.5px;font-weight:600;border-radius:999px;padding:3px 8px;background:#fff;color:var(--ink2);border:1px solid var(--lin)}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.fx em{display:inline-flex;align-items:center;gap:4px}.fx em svg{width:12px;height:12px}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='fx'>"
+			        & "<div class='card'><div class='top'><div class='chip'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></div>" & IF ( f > 0, "<em title='" & f & IF ( f = 1, " buque fondeado", " buques fondeados" ) & " frente a puerto, esperando atraque'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='5.5' r='2'/><path d='M12 7.5V21M5 13a7 7 0 0 0 14 0M8.5 11h7'/></svg>" & f & "</em>" ) & "</div><b>" & b & "</b><span>" & IF ( b = 1, "buque en el mar", "buques en el mar" ) & "</span></div>"
+			        & "<div class='card'><div class='top'><div class='chip'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c.9 0 1.4 1.2 1.4 2.6v4.2l7.1 4.1v1.8l-7.1-2.1v3.6l2.2 1.6V20L12 19l-3.6 1v-1.2l2.2-1.6v-3.6l-7.1 2.1v-1.8l7.1-4.1V5.6C10.6 4.2 11.1 3 12 3z'/></svg></div></div><b>" & a & "</b><span>" & IF ( a = 1, "vuelo en el aire", "vuelos en el aire" ) & "</span></div>"
+			        & "<div class='card'><div class='top'><div class='chip'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 7h11v9h-11z'/><path d='M13.5 10h4l3 3v3h-7'/><circle cx='6.5' cy='17.5' r='1.8'/><circle cx='17' cy='17.5' r='1.8'/></svg></div></div><b>" & c & "</b><span>" & IF ( c = 1, "camión en ruta", "camiones en ruta" ) & "</span></div>"
+			        & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 7ab815f2-c3ba-5621-9001-08e87dc1c442
+
+	/// Panel sobre el globo: valor, cargas y retraso de cada vía, y las vías que el escenario deja sin viajes.
+	measure 'HTML · Vías' =
+			VAR t = [Momento]
+			VAR esBase = [Escenario elegido] = "Base"
+			VAR valor = COALESCE ( [Valor en tránsito (€)], 0 )
+			VAR hoyVias = CALCULATETABLE ( VALUES ( Envios[Vía] ), Envios[Salida] <= t, Envios[Entrega] > t )
+			VAR vias =
+			    ADDCOLUMNS (
+			        hoyVias,
+			        "@v", CALCULATE ( SUM ( Envios[Valor (€)] ), Envios[Salida] <= t, Envios[Entrega] > t ),
+			        "@n", CALCULATE ( COUNTROWS ( Envios ), Envios[Salida] <= t, Envios[Entrega] > t ),
+			        "@d", CALCULATE ( AVERAGEX ( Envios, MAX ( Envios[Retraso (días)], 0 ) ), Envios[Salida] <= t, Envios[Entrega] > t )
+			    )
+			VAR viaTop = MAXX ( TOPN ( 1, vias, [@v], DESC ), Envios[Vía] )
+			VAR base =
+			    CALCULATETABLE (
+			        ADDCOLUMNS ( VALUES ( Envios[Vía] ), "@b", CALCULATE ( SUM ( Envios[Valor (€)] ) ) ),
+			        Envios[Salida] <= t, Envios[Entrega] > t, Escenarios[Escenario] = "Base"
+			    )
+			VAR sinViajes = FILTER ( base, NOT ( Envios[Vía] IN hoyVias ) )
+			VAR filas =
+			    CONCATENATEX (
+			        vias,
+			        "<div class='vr'><div class='n'><span>" & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", Envios[Vía] ) & "</span><b>" & FORMAT ( [@v] / 1000000, "0.0", "es-ES" ) & " M€</b></div>"
+			            & "<div class='bar'><i class='" & IF ( Envios[Vía] = viaTop, "l" ) & "' style='width:" & FORMAT ( MAX ( DIVIDE ( [@v], valor ) * 100, 4 ), "0.0", "en-US" ) & "%'></i></div>"
+			            & "<div class='s'>" & [@n] & IF ( [@n] = 1, " carga · ", " cargas · " ) & IF ( [@d] > 2, "<s>+" & FORMAT ( [@d], "0.0", "es-ES" ) & " d</s>", "en plazo" ) & "</div></div>",
+			        "", [@v], DESC
+			    )
+			VAR cerradas =
+			    IF ( NOT esBase,
+			        CONCATENATEX (
+			            sinViajes,
+			            "<div class='vr cerr'><div class='n'><span>" & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", Envios[Vía] ) & "</span><span class='cz'>SIN VIAJES</span></div>"
+			                & "<div class='s'>en la base llevaría " & FORMAT ( [@b] / 1000000, "0.0", "es-ES" ) & " M€</div></div>",
+			            "", [@b], DESC
+			        )
+			    )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.vp{background:rgba(255,255,255,.82);border:1px solid var(--lin);border-radius:22px;padding:14px 14px 6px}.vp .h{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600;margin-bottom:6px}.vp .h em{font-style:normal;font-size:11px;color:var(--mut);font-weight:400}.vr{padding:7px 0 8px;border-top:1px solid var(--lin)}.vr .n{display:flex;justify-content:space-between;font-size:12.5px;font-weight:500;white-space:nowrap}.vr .n b{font-weight:600;font-variant-numeric:tabular-nums}.vr .bar{height:8px;border-radius:999px;border:1px dashed var(--fai);margin:6px 0 4px;position:relative}.vr .bar i{position:absolute;left:-1px;top:-1px;bottom:-1px;border-radius:999px;background:var(--ink);transform-origin:left;animation:crece .9s cubic-bezier(.2,.8,.2,1) both}.vr .bar i.l{background:var(--lime);box-shadow:inset 0 0 0 1px var(--ink)}.vr .s{font-size:11px;color:var(--mut)}.vr .s s{text-decoration:none;color:#B8361B;font-weight:600}.vr.cerr .n{color:#B8361B}.cz{font-size:10px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--coral);border-radius:999px;padding:2px 7px}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}@keyframes sube{from{transform:scaleY(0)}}@keyframes crece{from{transform:scaleX(0)}}"
+			 & "</style><div class='t'>" & "<div class='vp'><div class='h'>Vías hoy<em>valor en tránsito</em></div>"
+			        & IF ( valor <= 0, "<div class='vr'><div class='s'>Nada en tránsito con estos filtros.</div></div>", filas & cerradas ) & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 93feefdd-919a-5dda-a29c-a2ac5c39d2bb
+
+	/// Panel del «···» de En tránsito: las cargas en tránsito a mediodía, las de más valor primero.
+	measure 'HTML · Panel tránsito' =
+			VAR caja = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='6' width='18' height='12' rx='2'/><path d='M7.5 6v12M12 6v12M16.5 6v12'/></svg>"
+			VAR cerrar = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 6.5l11 11M17.5 6.5l-11 11'/></svg>"
+			VAR meses = "ene feb mar abr may jun jul ago sep oct nov dic "
+			VAR t = [Momento]
+			VAR enT = CALCULATETABLE ( Envios, Envios[Salida] <= t, Envios[Entrega] > t )
+			VAR n = COALESCE ( COUNTROWS ( enT ), 0 )
+			VAR total = SUMX ( enT, Envios[Valor (€)] )
+			VAR nr = COALESCE ( COUNTROWS ( FILTER ( enT, Envios[Retraso (días)] > 2 ) ), 0 )
+			VAR primeras = TOPN ( 10, enT, Envios[Valor (€)], DESC, Envios[EnvioID], ASC )
+			VAR resto = n - COALESCE ( COUNTROWS ( primeras ), 0 )
+			VAR vResto = total - SUMX ( primeras, Envios[Valor (€)] )
+			VAR filas =
+			    CONCATENATEX (
+			        primeras,
+			        VAR r = Envios[Retraso (días)]
+			        VAR e = Envios[Entrega]
+			        RETURN "<tr><td>" & Envios[EnvioID] & "</td><td>" & RELATED ( Proveedores[Ciudad] ) & "<span class='ct'>" & RELATED ( 'Categorías'[Nombre corto] ) & "</span></td><td>"
+			            & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", Envios[Vía] ) & "</td><td>" & DAY ( e ) & " " & TRIM ( MID ( meses, ( MONTH ( e ) - 1 ) * 4 + 1, 4 ) ) & "</td><td class='n'>" & IF ( r > 7, "<span class='dd co'>+" & FORMAT ( r, "0", "es-ES" ) & " d</span>", IF ( r > 2, "<span class='dd am'>+" & FORMAT ( r, "0", "es-ES" ) & " d</span>", "<span class='gr'>en plazo</span>" ) )
+			            & "</td><td class='n'>" & FORMAT ( Envios[Valor (€)] / 1000, "#,0", "es-ES" ) & " mil €</td></tr>",
+			        "", Envios[Valor (€)], DESC, Envios[EnvioID], ASC
+			    )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.lima{background:var(--lime)}.lima .chip{border-color:transparent}.tr{width:22px;height:60px;border-radius:999px;border:1.3px dashed var(--fai);position:relative}.tr i{position:absolute;left:3px;right:3px;bottom:3px;min-height:13px;max-height:calc(100% - 6px);border-radius:999px;background:var(--ink);transform-origin:bottom;animation:sube .9s cubic-bezier(.2,.8,.2,1) both}.ct{font-size:10.5px;font-weight:500;color:var(--ink2);background:#fff;border:1px solid var(--lin);border-radius:999px;padding:1px 7px;margin-left:7px;vertical-align:1px}.dd{font-size:12px;font-weight:600;border-radius:999px;padding:4px 9px;white-space:nowrap}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.pn{position:relative;margin:14px;height:calc(100% - 28px);background:#fff;border:1px solid var(--lin);border-radius:28px;padding:22px 26px;box-shadow:0 4px 10px rgba(22,22,22,.10);display:flex;flex-direction:column;overflow:hidden}.ph{display:flex;align-items:center;gap:14px;padding-right:56px}.ph .tt{font-size:22px;font-weight:400;letter-spacing:-.03em;flex:1;min-width:0}.ph .tt em{display:block;font-style:normal;font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px;white-spa"
+			& "ce:nowrap;overflow:hidden;text-overflow:ellipsis}.pn .x{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--lin);display:flex;align-items:center;justify-content:center}.pn .x svg{width:16px;height:16px}.pk{display:flex;gap:8px;margin-top:16px}.pk div{background:var(--card);border-radius:16px;padding:8px 16px 9px}.pk b{font-size:22px;font-weight:400;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.pk span{display:block;font-size:11px;color:var(--mut)}.pk .lima span{color:rgba(22,22,22,.62)}.tb{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px}.tb th{text-align:left;font-weight:500;color:var(--mut);font-size:11px;padding:0 10px 7px;border-bottom:1px solid var(--lin);white-space:nowrap}.tb td{padding:6px 10px;border-bottom:1px solid var(--lin);white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}.tb .n{text-align:right;font-variant-numeric:tabular-nums}.tb td:first-child,.tb th:first-child{padding-left:0}.tb td:last-child,.tb th:last-child{padding-right:0}.tb .gr{color:var(--mut)}.dd.am{background:#FCEBC8;color:#8A5A00}.dd.co{background:#FBE0D8;color:#B8361B}.pf{margin-top:auto;padding-top:10px;font-size:11.5px;color:var(--mut)}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='pn'><div class='ph'><div class='chip'>" & caja & "</div><div class='tt'>En tránsito hoy<em>" & FORMAT ( n, "#,0", "es-ES" ) & IF ( n = 1, " carga", " cargas" ) & " a mediodía del día elegido · las de más valor primero" & "</em></div></div><div class='x'>" & cerrar & "</div>"
+			        & IF ( n = 0,
+			            "<div class='pf' style='margin-top:30px'>No hay mercancía en tránsito con estos filtros.</div>",
+			            "<div class='pk'><div class='lima'><b>" & FORMAT ( total / 1000000, "0.0", "es-ES" ) & " M€</b><span>valor en tránsito</span></div>"
+			                & "<div><b>" & FORMAT ( n, "#,0", "es-ES" ) & "</b><span>cargas</span></div><div><b>" & nr & "</b><span>con más de 2 días de retraso</span></div></div>"
+			                & "<table class='tb'><tr><th>Carga</th><th>Proveedor</th><th>Vía</th><th>Llega</th><th class='n'>Retraso</th><th class='n'>Valor</th></tr>" & filas & "</table>"
+			                & IF ( resto > 0, "<div class='pf'>Y " & FORMAT ( resto, "#,0", "es-ES" ) & IF ( resto = 1, " carga más", " cargas más" ) & " por " & FORMAT ( vResto / 1000000, "0.0", "es-ES" ) & " M€.</div>" )
+			        ) & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: b6bab00b-733e-5bb7-ad63-f07e0d8a56ab
+
+	/// Panel del «···» de Retraso en tránsito: las cargas en tránsito con más retraso.
+	measure 'HTML · Panel retraso' =
+			VAR reloj = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3.5 2'/></svg>"
+			VAR cerrar = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 6.5l11 11M17.5 6.5l-11 11'/></svg>"
+			VAR meses = "ene feb mar abr may jun jul ago sep oct nov dic "
+			VAR t = [Momento]
+			VAR enT = CALCULATETABLE ( Envios, Envios[Salida] <= t, Envios[Entrega] > t )
+			VAR n = COALESCE ( COUNTROWS ( enT ), 0 )
+			VAR tarde = FILTER ( enT, Envios[Retraso (días)] > 2 )
+			VAR nr = COALESCE ( COUNTROWS ( tarde ), 0 )
+			VAR peor = MAXX ( enT, Envios[Retraso (días)] )
+			VAR medio = COALESCE ( [Retraso en tránsito (días)], 0 )
+			VAR primeras = TOPN ( 10, enT, Envios[Retraso (días)], DESC, Envios[Valor (€)], DESC )
+			VAR filas =
+			    CONCATENATEX (
+			        primeras,
+			        VAR r = Envios[Retraso (días)]
+			        VAR p = Envios[Entrega prevista]
+			        VAR e = Envios[Entrega]
+			        RETURN "<tr><td>" & Envios[EnvioID] & "</td><td>" & RELATED ( Proveedores[Ciudad] ) & "<span class='ct'>" & RELATED ( 'Categorías'[Nombre corto] ) & "</span></td><td>"
+			            & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", Envios[Vía] ) & "</td><td class='gr'>" & DAY ( p ) & " " & TRIM ( MID ( meses, ( MONTH ( p ) - 1 ) * 4 + 1, 4 ) ) & "</td><td>" & DAY ( e ) & " " & TRIM ( MID ( meses, ( MONTH ( e ) - 1 ) * 4 + 1, 4 ) ) & "</td><td class='n'>" & IF ( r > 7, "<span class='dd co'>+" & FORMAT ( r, "0", "es-ES" ) & " d</span>", IF ( r > 2, "<span class='dd am'>+" & FORMAT ( r, "0", "es-ES" ) & " d</span>", "<span class='gr'>en plazo</span>" ) )
+			            & "</td><td class='n'>" & FORMAT ( Envios[Valor (€)] / 1000, "#,0", "es-ES" ) & " mil €</td></tr>",
+			        "", Envios[Retraso (días)], DESC, Envios[Valor (€)], DESC
+			    )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.lima{background:var(--lime)}.lima .chip{border-color:transparent}.tr{width:22px;height:60px;border-radius:999px;border:1.3px dashed var(--fai);position:relative}.tr i{position:absolute;left:3px;right:3px;bottom:3px;min-height:13px;max-height:calc(100% - 6px);border-radius:999px;background:var(--ink);transform-origin:bottom;animation:sube .9s cubic-bezier(.2,.8,.2,1) both}.ct{font-size:10.5px;font-weight:500;color:var(--ink2);background:#fff;border:1px solid var(--lin);border-radius:999px;padding:1px 7px;margin-left:7px;vertical-align:1px}.dd{font-size:12px;font-weight:600;border-radius:999px;padding:4px 9px;white-space:nowrap}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.pn{position:relative;margin:14px;height:calc(100% - 28px);background:#fff;border:1px solid var(--lin);border-radius:28px;padding:22px 26px;box-shadow:0 4px 10px rgba(22,22,22,.10);display:flex;flex-direction:column;overflow:hidden}.ph{display:flex;align-items:center;gap:14px;padding-right:56px}.ph .tt{font-size:22px;font-weight:400;letter-spacing:-.03em;flex:1;min-width:0}.ph .tt em{display:block;font-style:normal;font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px;white-spa"
+			& "ce:nowrap;overflow:hidden;text-overflow:ellipsis}.pn .x{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--lin);display:flex;align-items:center;justify-content:center}.pn .x svg{width:16px;height:16px}.pk{display:flex;gap:8px;margin-top:16px}.pk div{background:var(--card);border-radius:16px;padding:8px 16px 9px}.pk b{font-size:22px;font-weight:400;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.pk span{display:block;font-size:11px;color:var(--mut)}.pk .lima span{color:rgba(22,22,22,.62)}.tb{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px}.tb th{text-align:left;font-weight:500;color:var(--mut);font-size:11px;padding:0 10px 7px;border-bottom:1px solid var(--lin);white-space:nowrap}.tb td{padding:6px 10px;border-bottom:1px solid var(--lin);white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}.tb .n{text-align:right;font-variant-numeric:tabular-nums}.tb td:first-child,.tb th:first-child{padding-left:0}.tb td:last-child,.tb th:last-child{padding-right:0}.tb .gr{color:var(--mut)}.dd.am{background:#FCEBC8;color:#8A5A00}.dd.co{background:#FBE0D8;color:#B8361B}.pf{margin-top:auto;padding-top:10px;font-size:11.5px;color:var(--mut)}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='pn'><div class='ph'><div class='chip'>" & reloj & "</div><div class='tt'>Retraso en tránsito<em>" & "las cargas que aún no han llegado, las más retrasadas primero" & "</em></div></div><div class='x'>" & cerrar & "</div>"
+			        & IF ( n = 0,
+			            "<div class='pf' style='margin-top:30px'>No hay mercancía en tránsito con estos filtros.</div>",
+			            "<div class='pk'><div class='lima'><b>" & FORMAT ( medio, "0.0", "es-ES" ) & " d</b><span>retraso medio en tránsito</span></div>"
+			                & "<div><b>" & FORMAT ( nr, "#,0", "es-ES" ) & " de " & FORMAT ( n, "#,0", "es-ES" ) & "</b><span>cargas con más de 2 días de retraso</span></div>"
+			                & "<div><b>+" & FORMAT ( MAX ( peor, 0 ), "0", "es-ES" ) & " d</b><span>la más retrasada</span></div></div>"
+			                & "<table class='tb'><tr><th>Carga</th><th>Proveedor</th><th>Vía</th><th>Prevista</th><th>Llega</th><th class='n'>Retraso</th><th class='n'>Valor</th></tr>" & filas & "</table>"
+			                & IF ( nr > 10, "<div class='pf'>Y " & FORMAT ( nr - 10, "#,0", "es-ES" ) & " cargas más con retraso.</div>" )
+			        ) & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 478d81a1-1476-5fd1-a57e-091d2758875d
+
+	/// Panel del «···» de Exposición: valor en tránsito por vía y origen, y las vías que el escenario deja sin viajes.
+	measure 'HTML · Panel exposición' =
+			VAR ruta = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='6' cy='18' r='2'/><circle cx='18' cy='6' r='2'/><path d='M8 18h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16'/></svg>"
+			VAR cerrar = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 6.5l11 11M17.5 6.5l-11 11'/></svg>"
+			VAR t = [Momento]
+			VAR esBase = [Escenario elegido] = "Base"
+			VAR enT = CALCULATETABLE ( Envios, Envios[Salida] <= t, Envios[Entrega] > t )
+			VAR total = SUMX ( enT, Envios[Valor (€)] )
+			VAR grupos =
+			    GROUPBY (
+			        enT, Envios[Vía], Envios[Origen],
+			        "@v", SUMX ( CURRENTGROUP (), Envios[Valor (€)] ),
+			        "@n", SUMX ( CURRENTGROUP (), 1 ),
+			        "@d", AVERAGEX ( CURRENTGROUP (), MAX ( Envios[Retraso (días)], 0 ) )
+			    )
+			VAR vias = GROUPBY ( enT, Envios[Vía], "@v", SUMX ( CURRENTGROUP (), Envios[Valor (€)] ) )
+			VAR viaTop = MAXX ( TOPN ( 1, vias, [@v], DESC ), Envios[Vía] )
+			VAR vTop = COALESCE ( MAXX ( vias, [@v] ), 0 )
+			VAR mx = MAXX ( grupos, [@v] )
+			VAR primeras = TOPN ( 9, grupos, [@v], DESC )
+			VAR filas =
+			    CONCATENATEX (
+			        primeras,
+			        "<tr><td>" & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", Envios[Vía] ) & "</td><td>" & COALESCE ( LOOKUPVALUE ( Nodos[Nodo], Nodos[NodoID], Envios[Origen] ), Envios[Origen] )
+			            & "</td><td class='n'>" & [@n] & "</td><td class='n'>" & FORMAT ( [@v] / 1000000, "0.00", "es-ES" ) & " M€</td><td><span class='mb'><i class='"
+			            & IF ( Envios[Vía] = viaTop, "l" ) & "' style='width:" & FORMAT ( DIVIDE ( [@v], mx ) * 100, "0.0", "en-US" ) & "%'></i></span>" & FORMAT ( DIVIDE ( [@v], total ), "0 %", "es-ES" )
+			            & "</td><td class='n'>" & IF ( [@d] > 2, "+" & FORMAT ( [@d], "0.0", "es-ES" ) & " d", "en plazo" ) & "</td></tr>",
+			        "", [@v], DESC
+			    )
+			VAR hoyVias = SELECTCOLUMNS ( vias, "v", Envios[Vía] )
+			VAR base =
+			    CALCULATETABLE (
+			        ADDCOLUMNS ( VALUES ( Envios[Vía] ), "@b", CALCULATE ( SUM ( Envios[Valor (€)] ) ) ),
+			        Envios[Salida] <= t, Envios[Entrega] > t, Escenarios[Escenario] = "Base"
+			    )
+			VAR cerradas =
+			    IF ( NOT esBase,
+			        CONCATENATEX (
+			            FILTER ( base, NOT ( Envios[Vía] IN hoyVias ) ),
+			            "<tr class='cerr'><td>" & SWITCH ( Envios[Vía], "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", Envios[Vía] ) & "</td><td><span class='cz'>SIN VIAJES</span></td><td class='n'>0</td><td class='n'>0,00 M€</td>"
+			                & "<td colspan='2' class='gr'>en la base llevaría " & FORMAT ( [@b] / 1000000, "0.0", "es-ES" ) & " M€</td></tr>",
+			            "", [@b], DESC
+			        )
+			    )
+			VAR nombreTop = SWITCH ( viaTop, "Cabo", "Cabo de Buena Esperanza", "Suez", "Canal de Suez", "Europa", "Carretera europea", "Aérea", "Avión", viaTop )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.lima{background:var(--lime)}.lima .chip{border-color:transparent}.tr{width:22px;height:60px;border-radius:999px;border:1.3px dashed var(--fai);position:relative}.tr i{position:absolute;left:3px;right:3px;bottom:3px;min-height:13px;max-height:calc(100% - 6px);border-radius:999px;background:var(--ink);transform-origin:bottom;animation:sube .9s cubic-bezier(.2,.8,.2,1) both}.tr i.l{background:var(--lime);box-shadow:inset 0 0 0 1.4px var(--ink)}.cz{font-size:10px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--coral);border-radius:999px;padding:2px 7px}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.pn{position:relative;margin:14px;height:calc(100% - 28px);background:#fff;border:1px solid var(--lin);border-radius:28px;padding:22px 26px;box-shadow:0 4px 10px rgba(22,22,22,.10);display:flex;flex-direction:column;overflow:hidden}.ph{display:flex;align-items:center;gap:14px;padding-right:56px}.ph .tt{font-size:22px;font-weight:400;letter-spacing:-.03em;flex:1;min-width:0}.ph .tt em{display:block;font-style:normal;font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn .x{positi"
+			& "on:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--lin);display:flex;align-items:center;justify-content:center}.pn .x svg{width:16px;height:16px}.pk{display:flex;gap:8px;margin-top:16px}.pk div{background:var(--card);border-radius:16px;padding:8px 16px 9px}.pk b{font-size:22px;font-weight:400;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.pk span{display:block;font-size:11px;color:var(--mut)}.pk .lima span{color:rgba(22,22,22,.62)}.tb{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px}.tb th{text-align:left;font-weight:500;color:var(--mut);font-size:11px;padding:0 10px 7px;border-bottom:1px solid var(--lin);white-space:nowrap}.tb td{padding:6px 10px;border-bottom:1px solid var(--lin);white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}.tb .n{text-align:right;font-variant-numeric:tabular-nums}.tb td:first-child,.tb th:first-child{padding-left:0}.tb td:last-child,.tb th:last-child{padding-right:0}.tb .gr{color:var(--mut)}.tb tr.cerr td{color:#B8361B}.mb{display:inline-block;width:64px;height:6px;border-radius:999px;background:var(--lin);vertical-align:middle;margin-right:8px;position:relative;overflow:hidden}.mb i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--ink)}.mb i.l{background:#9DB300}.pf{margin-top:auto;padding-top:10px;font-size:11.5px;color:var(--mut)}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='pn'><div class='ph'><div class='chip'>" & ruta & "</div><div class='tt'>Exposición por vía<em>" & "cuánto del valor en tránsito depende de cada vía y de cada origen" & "</em></div></div><div class='x'>" & cerrar & "</div>"
+			        & IF ( total <= 0,
+			            "<div class='pf' style='margin-top:30px'>No hay mercancía en tránsito con estos filtros.</div>",
+			            "<div class='pk'><div class='lima'><b>" & FORMAT ( DIVIDE ( vTop, total ), "0 %", "es-ES" ) & "</b><span>por " & nombreTop & "</span></div>"
+			                & "<div><b>" & FORMAT ( total / 1000000, "0.0", "es-ES" ) & " M€</b><span>valor en tránsito</span></div>"
+			                & "<div><b>" & COUNTROWS ( vias ) & "</b><span>" & IF ( COUNTROWS ( vias ) = 1, "vía con viajes", "vías con viajes" ) & "</span></div></div>"
+			                & "<table class='tb'><tr><th>Vía</th><th>Origen</th><th class='n'>Cargas</th><th class='n'>Valor</th><th>Parte del total</th><th class='n'>Retraso medio</th></tr>"
+			                & filas & cerradas & "</table>"
+			                & IF ( COUNTROWS ( grupos ) > 9, "<div class='pf'>Y " & ( COUNTROWS ( grupos ) - 9 ) & " orígenes más con menos valor.</div>" )
+			        ) & "</div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: fd263b77-f1a5-505c-b64a-72a58507dce7
+
+	/// Panel del botón de ayuda: cómo leer la torre y qué hace cada botón.
+	measure 'HTML · Panel ayuda' =
+			VAR ayuda = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6M12 16.8v.3'/></svg>"
+			VAR cerrar = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 6.5l11 11M17.5 6.5l-11 11'/></svg>"
+			VAR it = "<div><div class='chip'>"
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.lima{background:var(--lime)}.lima .chip{border-color:transparent}.tres{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:8px;margin-top:10px}.it{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:20px;padding:10px 14px 10px 10px}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.pn{position:relative;margin:14px;height:calc(100% - 28px);background:#fff;border:1px solid var(--lin);border-radius:28px;padding:22px 26px;box-shadow:0 4px 10px rgba(22,22,22,.10);display:flex;flex-direction:column;overflow:hidden}.ph{display:flex;align-items:center;gap:14px;padding-right:56px}.ph .tt{font-size:22px;font-weight:400;letter-spacing:-.03em;flex:1;min-width:0}.ph .tt em{display:block;font-style:normal;font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn .x{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--lin);display:flex;align-items:center;justify-content:center}.pn .x svg{width:16px;height:16px}.pf{margin-top:auto;padding-top:10px;font-size:11.5px;color:var(--mut)}.ay{display:grid;grid-templa"
+			& "te-columns:1fr 1fr;gap:16px 30px;margin-top:20px}.ay>div{display:flex;gap:12px;align-items:flex-start}.ay b{display:block;font-size:13.5px;font-weight:600;margin-bottom:3px}.ay span{font-size:12px;color:var(--ink2);line-height:1.45}.ay .chip{width:34px;height:34px;border-radius:11px}.ay .chip svg{width:17px;height:17px}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='pn'><div class='ph'><div class='chip'>" & ayuda & "</div><div class='tt'>Cómo leer la torre<em>" & "todo lo que ves es del mediodía del día elegido · datos ficticios" & "</em></div></div><div class='x'>" & cerrar & "</div>"
+			        & "<div class='ay'>"
+			        & it & "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div><b>El globo</b><span>Cada punto es un buque, un avión o un camión en ruta. Negro, en plazo; ámbar, de 3 a 7 días tarde; coral, más de 7. Arrastra para girarlo y usa la rueda para acercarte.</span></div></div>"
+			        & it & "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div><b>El día</b><span>Pincha un día en la curva de abajo o abre el calendario de la barra lateral. Sin elegir nada, la torre enseña su día por defecto.</span></div></div>"
+			        & it & "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17 17 7M9 7h8v8'/></svg></div><div><b>El escenario</b><span>La tarjeta negra cuenta el cierre. La flecha cambia entre la base y el cierre; la pastilla blanca deja en el globo solo las cargas desviadas por el Cabo.</span></div></div>"
+			        & it & "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></div><div><b>La barra lateral</b><span>Globo, barco, avión y camión son las páginas: la torre y una por modo de transporte, con sus tablas y gráficos. Abajo, el calendario y esta ayuda.</span></div></div>"
+			        & it & "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='6' width='18' height='12' rx='2'/><path d='M7.5 6v12M12 6v12M16.5 6v12'/></svg></div><div><b>Las tarjetas</b><span>Los tres puntos de cada tarjeta abren el detalle que hay detrás del número: cargas, vías, orígenes y retrasos.</span></div></div>"
+			        & it & "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='m12 3 9 5-9 5-9-5z'/><path d='m3 13 9 5 9-5'/></svg></div><div><b>Los filtros</b><span>Las pastillas de arriba filtran por categoría y por modo de transporte (otro clic lo quita); en el globo se atenúan los barcos que no llevan esa categoría. «Base» y «Cierre de Suez» cambian el escenario.</span></div></div>"
+			        & it & "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M5 20V11M10 20V5M15 20v-6M20 20V9'/></svg></div><div><b>Las llegadas</b><span>Lo que entra en el almacén cada día de los próximos 14 o 30 días: lima, a tiempo; negro, con retraso.</span></div></div>"
+			        & "</div><div class='pf'>Torre de control de aprovisionamiento · simulación con datos inventados.</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 90674f3b-33c5-588e-9bab-544a849fad05
+
+	/// Panel del calendario: rótulos y día elegido; los meses y los días son segmentadores nativos encima.
+	measure 'HTML · Panel calendario' =
+			VAR cal = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg>"
+			VAR cerrar = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 6.5l11 11M17.5 6.5l-11 11'/></svg>"
+			VAR f = [Fecha elegida]
+			VAR fecha = FORMAT ( f, "dddd, d ""de"" mmmm ""de"" yyyy", "es-ES" )
+			VAR elegido = ISFILTERED ( Calendario )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.chip{width:36px;height:36px;border-radius:12px;background:#fff;border:1px solid var(--lin);display:flex;align-items:center;justify-content:center;flex:none}.chip svg{width:19px;height:19px}.al{display:flex;flex-direction:column;gap:8px;height:100%}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.pn{position:relative;margin:14px;height:calc(100% - 28px);background:#fff;border:1px solid var(--lin);border-radius:28px;padding:22px 26px;box-shadow:0 4px 10px rgba(22,22,22,.10);display:flex;flex-direction:column;overflow:hidden}.ph{display:flex;align-items:center;gap:14px;padding-right:56px}.ph .tt{font-size:22px;font-weight:400;letter-spacing:-.03em;flex:1;min-width:0}.ph .tt em{display:block;font-style:normal;font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn .x{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--lin);display:flex;align-items:center;justify-content:center}.pn .x svg{width:16px;height:16px}.cl{position:absolute;left:26px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}.vd{position:absolute;left:26px;right:26px;bottom:20px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);gap:16px}.vd b{color:var(-"
+			& "-ink);font-weight:600}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='pn'><div class='ph'><div class='chip'>" & cal & "</div><div class='tt'>Elegir día<em>" & "un mes y un día; también vale pinchar un día en la curva de abajo" & "</em></div></div><div class='x'>" & cerrar & "</div>"
+			        & "<div class='cl' style='top:96px'>Mes</div><div class='cl' style='top:216px'>Día</div>"
+			        & "<div class='vd'><span>Viendo el <b>" & fecha & "</b></span><span>"
+			        & IF ( elegido, "Quita la selección para volver al día por defecto", "Es el día por defecto de la torre" ) & "</span></div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 87cb983c-e0f7-5dcd-8b7e-e7ff812637b8
+
+	/// Filtro del globo (filtro de nivel de objeto visual = 1): con la pastilla del escenario pulsada deja solo los viajes que van por la ruta alternativa.
+	measure 'En foco' =
+			VAR desviadas = ISFILTERED ( 'Foco desvío' )
+			VAR alternativas = FILTER ( ALL ( Rutas[Alternativa] ), Rutas[Alternativa] <> "" )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( [Lon hoy] )
+			            && ( NOT desviadas || SELECTEDVALUE ( Viajes[RutaID] ) IN alternativas ),
+			        1
+			    )
+		formatString: 0
+		displayFolder: 5 · Globo
+		lineageTag: 13e88793-1f78-5303-b128-624b866a0c5e
+
+	/// Barra lateral de la página Mar, con su icono encendido.
+	measure 'HTML · Barra lateral · Mar' =
+			"<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.lat{background:#161616;border-radius:26px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 0}.logo{width:48px;height:48px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:26px;color:#161616}.logo svg{width:24px;height:24px}.lb{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:5px 0;color:#9A9E97}.lb svg{width:21px;height:21px}.lb.a{background:#2E2F2D;color:#fff}.sp{flex:1}.av{width:48px;height:48px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.02em;margin-top:8px;color:#161616}"
+			 & "</style><div class='t'>" & "<div class='lat'><div class='logo'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb a'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c.9 0 1.4 1.2 1.4 2.6v4.2l7.1 4.1v1.8l-7.1-2.1v3.6l2.2 1.6V20L12 19l-3.6 1v-1.2l2.2-1.6v-3.6l-7.1 2.1v-1.8l7.1-4.1V5.6C10.6 4.2 11.1 3 12 3z'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 7h11v9h-11z'/><path d='M13.5 10h4l3 3v3h-7'/><circle cx='6.5' cy='17.5' r='1.8'/><circle cx='17' cy='17.5' r='1.8'/></svg></div><div class='sp'></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6M12 16.8v.3'/></svg></div><div class='av'>CD</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 55ae186a-ce59-5e6e-a6c6-0e4345fcf32b
+
+	/// Barra lateral de la página Aire, con su icono encendido.
+	measure 'HTML · Barra lateral · Aire' =
+			"<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.lat{background:#161616;border-radius:26px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 0}.logo{width:48px;height:48px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:26px;color:#161616}.logo svg{width:24px;height:24px}.lb{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:5px 0;color:#9A9E97}.lb svg{width:21px;height:21px}.lb.a{background:#2E2F2D;color:#fff}.sp{flex:1}.av{width:48px;height:48px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.02em;margin-top:8px;color:#161616}"
+			 & "</style><div class='t'>" & "<div class='lat'><div class='logo'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></div><div class='lb a'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c.9 0 1.4 1.2 1.4 2.6v4.2l7.1 4.1v1.8l-7.1-2.1v3.6l2.2 1.6V20L12 19l-3.6 1v-1.2l2.2-1.6v-3.6l-7.1 2.1v-1.8l7.1-4.1V5.6C10.6 4.2 11.1 3 12 3z'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 7h11v9h-11z'/><path d='M13.5 10h4l3 3v3h-7'/><circle cx='6.5' cy='17.5' r='1.8'/><circle cx='17' cy='17.5' r='1.8'/></svg></div><div class='sp'></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6M12 16.8v.3'/></svg></div><div class='av'>CD</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 5a1dd170-cb76-5d7a-94f0-24b9c19e363a
+
+	/// Barra lateral de la página Carretera, con su icono encendido.
+	measure 'HTML · Barra lateral · Carretera' =
+			"<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}.lat{background:#161616;border-radius:26px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 0}.logo{width:48px;height:48px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:26px;color:#161616}.logo svg{width:24px;height:24px}.lb{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:5px 0;color:#9A9E97}.lb svg{width:21px;height:21px}.lb.a{background:#2E2F2D;color:#fff}.sp{flex:1}.av{width:48px;height:48px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.02em;margin-top:8px;color:#161616}"
+			 & "</style><div class='t'>" & "<div class='lat'><div class='logo'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><ellipse cx='12' cy='12' rx='4' ry='9'/><path d='M3 12h18'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c.9 0 1.4 1.2 1.4 2.6v4.2l7.1 4.1v1.8l-7.1-2.1v3.6l2.2 1.6V20L12 19l-3.6 1v-1.2l2.2-1.6v-3.6l-7.1 2.1v-1.8l7.1-4.1V5.6C10.6 4.2 11.1 3 12 3z'/></svg></div><div class='lb a'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 7h11v9h-11z'/><path d='M13.5 10h4l3 3v3h-7'/><circle cx='6.5' cy='17.5' r='1.8'/><circle cx='17' cy='17.5' r='1.8'/></svg></div><div class='sp'></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div class='lb'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6M12 16.8v.3'/></svg></div><div class='av'>CD</div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: fcf3d47d-8ee4-5078-9b98-d615b626bdf3
+
+	/// Título de la página Mar, día que se está viendo y aviso de datos ficticios.
+	measure 'HTML · Cabecera · Mar' =
+			VAR nombre = COALESCE ( SELECTEDVALUE ( Torre[Nombre] ), "Torre de control" )
+			VAR ficticios = SELECTEDVALUE ( Torre[Datos ficticios] ) = "Sí"
+			VAR esc = [Escenario elegido]
+			VAR descEsc = LOOKUPVALUE ( Escenarios[Descripción], Escenarios[Escenario], esc )
+			VAR nota = IF ( NOT ISFILTERED ( Calendario ) && esc = MAX ( Torre[Escenario por defecto] ), SELECTEDVALUE ( Torre[Nota de la fecha] ) )
+			VAR sub = IF ( nota <> "", nota, descEsc )
+			VAR fecha = FORMAT ( [Fecha elegida], "dddd, d ""de"" mmmm ""de"" yyyy", "es-ES" )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.cab{display:flex;justify-content:space-between;align-items:flex-start;height:100%}.ti{font-size:50px;font-weight:400;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}.pl{display:inline-flex;align-items:center;justify-content:center;width:62px;height:40px;border-radius:999px;vertical-align:6px;margin:0 6px}.pl svg{width:21px;height:21px}.pl.g{background:#fff;border:1px solid var(--lin)}.pl.l{background:var(--lime)}.der{display:flex;align-items:center;gap:10px;margin-top:22px}.fe{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--lin);border-radius:999px;padding:7px 18px 7px 8px}.fe .ci{width:34px;height:34px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center}.fe .ci svg{width:17px;height:17px}.fe b{display:block;font-size:14px;font-weight:600}.fe span{display:block;font-size:11.5px;color:var(--mut)}.fe b::first-letter,.fe span::first-letter{text-transform:uppercase}.fic{font-size:11.5px;font-weight:600;border-radius:999px;padding:9px 14px;border:1px dashed var(--fai);color:var(--ink2);white-space:nowrap}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='cab'><div class='ti'>Por mar<span class='pl l'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M3 15h18l-2.4 5H5.4z'/><path d='M6 15V9.5h12V15'/><path d='M9.5 9.5V6h5v3.5'/></svg></span>buques<br>y<span class='pl g'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='6' width='18' height='12' rx='2'/><path d='M7.5 6v12M12 6v12M16.5 6v12'/></svg></span>puertos</div>"
+			        & "<div class='der'>" & IF ( ficticios, "<span class='fic'>Datos ficticios · simulación</span>" )
+			        & "<div class='fe'><div class='ci'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div><b>" & fecha & "</b><span>" & sub & "</span></div></div></div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: 18f159ea-c83e-5e99-9209-581ccca76446
+
+	/// Título de la página Aire, día que se está viendo y aviso de datos ficticios.
+	measure 'HTML · Cabecera · Aire' =
+			VAR nombre = COALESCE ( SELECTEDVALUE ( Torre[Nombre] ), "Torre de control" )
+			VAR ficticios = SELECTEDVALUE ( Torre[Datos ficticios] ) = "Sí"
+			VAR esc = [Escenario elegido]
+			VAR descEsc = LOOKUPVALUE ( Escenarios[Descripción], Escenarios[Escenario], esc )
+			VAR nota = IF ( NOT ISFILTERED ( Calendario ) && esc = MAX ( Torre[Escenario por defecto] ), SELECTEDVALUE ( Torre[Nota de la fecha] ) )
+			VAR sub = IF ( nota <> "", nota, descEsc )
+			VAR fecha = FORMAT ( [Fecha elegida], "dddd, d ""de"" mmmm ""de"" yyyy", "es-ES" )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.cab{display:flex;justify-content:space-between;align-items:flex-start;height:100%}.ti{font-size:50px;font-weight:400;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}.pl{display:inline-flex;align-items:center;justify-content:center;width:62px;height:40px;border-radius:999px;vertical-align:6px;margin:0 6px}.pl svg{width:21px;height:21px}.pl.g{background:#fff;border:1px solid var(--lin)}.pl.l{background:var(--lime)}.der{display:flex;align-items:center;gap:10px;margin-top:22px}.fe{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--lin);border-radius:999px;padding:7px 18px 7px 8px}.fe .ci{width:34px;height:34px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center}.fe .ci svg{width:17px;height:17px}.fe b{display:block;font-size:14px;font-weight:600}.fe span{display:block;font-size:11.5px;color:var(--mut)}.fe b::first-letter,.fe span::first-letter{text-transform:uppercase}.fic{font-size:11.5px;font-weight:600;border-radius:999px;padding:9px 14px;border:1px dashed var(--fai);color:var(--ink2);white-space:nowrap}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='cab'><div class='ti'>Por aire<span class='pl l'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3c.9 0 1.4 1.2 1.4 2.6v4.2l7.1 4.1v1.8l-7.1-2.1v3.6l2.2 1.6V20L12 19l-3.6 1v-1.2l2.2-1.6v-3.6l-7.1 2.1v-1.8l7.1-4.1V5.6C10.6 4.2 11.1 3 12 3z'/></svg></span>vuelos<br>y<span class='pl g'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3.5 2'/></svg></span>urgencias</div>"
+			        & "<div class='der'>" & IF ( ficticios, "<span class='fic'>Datos ficticios · simulación</span>" )
+			        & "<div class='fe'><div class='ci'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div><b>" & fecha & "</b><span>" & sub & "</span></div></div></div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: bb99f406-5436-5843-8db8-0290f35746fb
+
+	/// Título de la página Carretera, día que se está viendo y aviso de datos ficticios.
+	measure 'HTML · Cabecera · Carretera' =
+			VAR nombre = COALESCE ( SELECTEDVALUE ( Torre[Nombre] ), "Torre de control" )
+			VAR ficticios = SELECTEDVALUE ( Torre[Datos ficticios] ) = "Sí"
+			VAR esc = [Escenario elegido]
+			VAR descEsc = LOOKUPVALUE ( Escenarios[Descripción], Escenarios[Escenario], esc )
+			VAR nota = IF ( NOT ISFILTERED ( Calendario ) && esc = MAX ( Torre[Escenario por defecto] ), SELECTEDVALUE ( Torre[Nota de la fecha] ) )
+			VAR sub = IF ( nota <> "", nota, descEsc )
+			VAR fecha = FORMAT ( [Fecha elegida], "dddd, d ""de"" mmmm ""de"" yyyy", "es-ES" )
+			RETURN
+			    "<style>" & 
+			"html,body{margin:0;padding:0;overflow:hidden;background:transparent}*{box-sizing:border-box}.t{--ink:#161616;--ink2:#3B3D3A;--mut:#6F746C;--fai:#B9BDB5;--lin:#E2E5DF;--card:#F7F8F5;--lime:#E2F27A;--coral:#EF5A3C;--amber:#F0AE3A;font-family:'Segoe UI Variable Display','Segoe UI Variable Text','Segoe UI',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;height:100vh}svg .b{animation:sube .9s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:bottom}.cab{display:flex;justify-content:space-between;align-items:flex-start;height:100%}.ti{font-size:50px;font-weight:400;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}.pl{display:inline-flex;align-items:center;justify-content:center;width:62px;height:40px;border-radius:999px;vertical-align:6px;margin:0 6px}.pl svg{width:21px;height:21px}.pl.g{background:#fff;border:1px solid var(--lin)}.pl.l{background:var(--lime)}.der{display:flex;align-items:center;gap:10px;margin-top:22px}.fe{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--lin);border-radius:999px;padding:7px 18px 7px 8px}.fe .ci{width:34px;height:34px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center}.fe .ci svg{width:17px;height:17px}.fe b{display:block;font-size:14px;font-weight:600}.fe span{display:block;font-size:11.5px;color:var(--mut)}.fe b::first-letter,.fe span::first-letter{text-transform:uppercase}.fic{font-size:11.5px;font-weight:600;border-radius:999px;padding:9px 14px;border:1px dashed var(--fai);color:var(--ink2);white-space:nowrap}@keyframes sube{from{transform:scaleY(0)}}"
+			 & "</style><div class='t'>" & "<div class='cab'><div class='ti'>Por carretera<span class='pl l'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 7h11v9h-11z'/><path d='M13.5 10h4l3 3v3h-7'/><circle cx='6.5' cy='17.5' r='1.8'/><circle cx='17' cy='17.5' r='1.8'/></svg></span>camiones<br>y<span class='pl g'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><circle cx='6' cy='18' r='2'/><circle cx='18' cy='6' r='2'/><path d='M8 18h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16'/></svg></span>proveedores</div>"
+			        & "<div class='der'>" & IF ( ficticios, "<span class='fic'>Datos ficticios · simulación</span>" )
+			        & "<div class='fe'><div class='ci'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3.5' y='5' width='17' height='15' rx='3'/><path d='M3.5 10h17M8 3v4M16 3v4'/></svg></div><div><b>" & fecha & "</b><span>" & sub & "</span></div></div></div></div></div>"
+		displayFolder: 7 · HTML
+		lineageTag: f57ae3a8-3bbc-5bd0-b736-1f0452bcee12
+
+	/// Filtro de la tabla de envíos de las páginas de modo: 1 si la carga está en tránsito a mediodía del día elegido.
+	measure 'En tránsito ahora' =
+			VAR t = [Momento]
+			RETURN IF ( NOT ISEMPTY ( FILTER ( Envios, Envios[Salida] <= t && Envios[Entrega] > t ) ), 1 )
+		formatString: 0
+		displayFolder: 6 · Tablas
+		lineageTag: b10465fd-d642-5db4-9155-625da7801ddd
+
+	/// Días de puerto a puerto previstos de la ruta (solo si la ruta tiene envíos con los filtros actuales).
+	measure 'Días previstos' = IF ( NOT ISEMPTY ( Envios ), MAX ( Rutas[Días previstos] ) )
+		formatString: 0
+		displayFolder: 6 · Tablas
+		lineageTag: a868ce3d-76cd-5cd5-8d58-673b1cca0b6a
+
+	/// Días medios de puerto a puerto de lo que llegó en los últimos 60 días.
+	measure 'Días reales (60 d)' =
+			VAR t = [Momento]
+			RETURN CALCULATE ( AVERAGEX ( Envios, Envios[Llegada] - Envios[Salida] ), Envios[Llegada] > t - 60, Envios[Llegada] <= t )
+		formatString: 0.0
+		displayFolder: 6 · Tablas
+		lineageTag: e92ca23d-b989-5229-85ff-9a03f4bceffc
+
+	/// Valor en tránsito a mediodía de cada día de la curva (misma cifra que [Valor en tránsito (€)], calculada de una vez para todo el año).
+	measure 'Tránsito diario (€)' = SUM ( 'Envios por día'[Valor] )
+		formatString: #,0 €
+		displayFolder: 2 · En tránsito
+		lineageTag: 14a59599-512b-5317-b126-29e751d5fb14
+
+	/// La misma curva en el escenario Base.
+	measure 'Tránsito diario (Base)' = CALCULATE ( [Tránsito diario (€)], Escenarios[Escenario] = "Base" )
+		formatString: #,0 €
+		displayFolder: 2 · En tránsito
+		lineageTag: 6ca430ee-423c-5f5f-b81f-88126aec16ce
 
 	column Oculta
 		isHidden

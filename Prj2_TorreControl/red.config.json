@@ -24,17 +24,17 @@
     {"id": "VER", "nombre": "Veracruz", "pais": "México", "tipo": "origen", "lon": -96.13, "lat": 19.2},
     {"id": "SAV", "nombre": "Savannah", "pais": "Estados Unidos", "tipo": "origen", "lon": -81.0, "lat": 32.08},
     {"id": "VLC", "nombre": "Valencia", "pais": "España", "tipo": "destino", "lon": -0.32, "lat": 39.44},
-    {"id": "ALG", "nombre": "Algeciras", "pais": "España", "tipo": "destino", "lon": -5.43, "lat": 36.13},
+    {"id": "ALG", "nombre": "Algeciras", "pais": "España", "tipo": "destino", "lon": -5.43, "lat": 36.13, "rotulo": "izquierda"},
     {"id": "BCN", "nombre": "Barcelona", "pais": "España", "tipo": "destino", "lon": 2.17, "lat": 41.35},
     {"id": "PVG", "nombre": "Aeropuerto de Shanghái", "pais": "China", "tipo": "aeropuerto", "lon": 121.8, "lat": 31.15},
     {"id": "ICN", "nombre": "Aeropuerto de Seúl", "pais": "Corea del Sur", "tipo": "aeropuerto", "lon": 126.45, "lat": 37.46},
     {"id": "MAA", "nombre": "Aeropuerto de Chennai", "pais": "India", "tipo": "aeropuerto", "lon": 80.17, "lat": 12.99},
     {"id": "MAD", "nombre": "Aeropuerto de Madrid", "pais": "España", "tipo": "aeropuerto", "lon": -3.57, "lat": 40.47},
-    {"id": "MALACA", "nombre": "Estrecho de Malaca", "tipo": "paso", "lon": 100.2, "lat": 3.6},
+    {"id": "MALACA", "nombre": "Estrecho de Malaca", "tipo": "paso", "lon": 100.2, "lat": 3.6, "rotulo": "abajo"},
     {"id": "BAB", "nombre": "Bab el-Mandeb", "tipo": "paso", "lon": 43.35, "lat": 12.55},
     {"id": "SUEZ", "nombre": "Canal de Suez", "tipo": "paso", "lon": 32.55, "lat": 30.6},
     {"id": "GIBRALTAR", "nombre": "Estrecho de Gibraltar", "tipo": "paso", "lon": -5.75, "lat": 35.95},
-    {"id": "CABO", "nombre": "Cabo de Buena Esperanza", "tipo": "paso", "lon": 18.5, "lat": -35.2}
+    {"id": "CABO", "nombre": "Cabo de Buena Esperanza", "tipo": "paso", "lon": 18.5, "lat": -35.2, "rotulo": "abajo"}
   ],
   "_puntos": "Puntos de paso sin nombre visible que dan forma a las rutas por el mar o por carretera (longitud, latitud).",
   "puntos": {
@@ -95,13 +95,13 @@
   ],
   "_categorias": "Las de Almacén CD-01. cobertura_dias: stock de seguridad en el almacén; si un envío llega más tarde, hay riesgo de rotura. valor_contenedor: euros por contenedor o carga (ilustrativo).",
   "categorias": [
-    {"nombre": "Bebidas", "nombre_corto": "Bebidas", "color": "#38BDF8", "color_claro": "#93DDFD", "color_oscuro": "#0284C7", "cobertura_dias": 10, "valor_contenedor": [18000, 32000], "estacionalidad": [0.8, 0.85, 0.95, 1.05, 1.15, 1.4, 1.55, 1.45, 1.1, 0.95, 0.95, 1.2]},
-    {"nombre": "Alimentación", "nombre_corto": "Alimentación", "color": "#F59E0B", "color_claro": "#FCD38D", "color_oscuro": "#B45309", "cobertura_dias": 14, "valor_contenedor": [28000, 60000], "estacionalidad": [0.9, 0.95, 1, 1.05, 1, 0.95, 0.9, 0.8, 1, 1, 1.05, 1.3]},
-    {"nombre": "Droguería", "nombre_corto": "Droguería", "color": "#22C55E", "color_claro": "#9AF0B6", "color_oscuro": "#15803D", "cobertura_dias": 18, "valor_contenedor": [24000, 45000], "estacionalidad": [0.95, 0.95, 1.05, 1.05, 1, 1, 0.95, 0.85, 1, 1, 1.1, 1.1]},
-    {"nombre": "Higiene y belleza", "nombre_corto": "Higiene", "color": "#EC4899", "color_claro": "#F9B6D6", "color_oscuro": "#BE185D", "cobertura_dias": 12, "valor_contenedor": [60000, 140000], "estacionalidad": [0.9, 0.9, 0.95, 1, 1.05, 1.15, 1.2, 1, 0.95, 0.95, 1.15, 1.3]},
-    {"nombre": "Mascotas", "nombre_corto": "Mascotas", "color": "#F97316", "color_claro": "#FDC28E", "color_oscuro": "#C2410C", "cobertura_dias": 15, "valor_contenedor": [26000, 42000], "estacionalidad": [1, 1, 1, 1, 1, 1, 0.95, 0.9, 1, 1, 1.05, 1.1]},
-    {"nombre": "Bazar y hogar", "nombre_corto": "Bazar", "color": "#8B5CF6", "color_claro": "#C9BEFF", "color_oscuro": "#6D28D9", "cobertura_dias": 25, "valor_contenedor": [30000, 80000], "estacionalidad": [0.8, 0.85, 0.95, 1, 1, 1, 0.9, 0.8, 1, 1, 1.4, 1.5]},
-    {"nombre": "Temporada Navidad", "nombre_corto": "Navidad", "color": "#EF4444", "color_claro": "#FCA5A5", "color_oscuro": "#B91C1C", "cobertura_dias": 20, "valor_contenedor": [45000, 110000], "estacionalidad": [0.25, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.2, 1.0, 2.4]}
+    {"nombre": "Bebidas", "nombre_corto": "Bebidas", "color": "#8EC1EE", "color_claro": "#D6E8F8", "color_oscuro": "#2F6FA8", "cobertura_dias": 10, "valor_contenedor": [18000, 32000], "estacionalidad": [0.8, 0.85, 0.95, 1.05, 1.15, 1.4, 1.55, 1.45, 1.1, 0.95, 0.95, 1.2]},
+    {"nombre": "Alimentación", "nombre_corto": "Alimentación", "color": "#F2C14E", "color_claro": "#FAE6B3", "color_oscuro": "#9A6B00", "cobertura_dias": 14, "valor_contenedor": [28000, 60000], "estacionalidad": [0.9, 0.95, 1, 1.05, 1, 0.95, 0.9, 0.8, 1, 1, 1.05, 1.3]},
+    {"nombre": "Droguería", "nombre_corto": "Droguería", "color": "#8FD3B0", "color_claro": "#D5F0E2", "color_oscuro": "#2E7D57", "cobertura_dias": 18, "valor_contenedor": [24000, 45000], "estacionalidad": [0.95, 0.95, 1.05, 1.05, 1, 1, 0.95, 0.85, 1, 1, 1.1, 1.1]},
+    {"nombre": "Higiene y belleza", "nombre_corto": "Higiene", "color": "#F3A3C6", "color_claro": "#FBDDEA", "color_oscuro": "#A63A6B", "cobertura_dias": 12, "valor_contenedor": [60000, 140000], "estacionalidad": [0.9, 0.9, 0.95, 1, 1.05, 1.15, 1.2, 1, 0.95, 0.95, 1.15, 1.3]},
+    {"nombre": "Mascotas", "nombre_corto": "Mascotas", "color": "#F5A877", "color_claro": "#FCDCC6", "color_oscuro": "#A8531C", "cobertura_dias": 15, "valor_contenedor": [26000, 42000], "estacionalidad": [1, 1, 1, 1, 1, 1, 0.95, 0.9, 1, 1, 1.05, 1.1]},
+    {"nombre": "Bazar y hogar", "nombre_corto": "Bazar", "color": "#B8A5F0", "color_claro": "#E3DBFA", "color_oscuro": "#5B43B0", "cobertura_dias": 25, "valor_contenedor": [30000, 80000], "estacionalidad": [0.8, 0.85, 0.95, 1, 1, 1, 0.9, 0.8, 1, 1, 1.4, 1.5]},
+    {"nombre": "Temporada Navidad", "nombre_corto": "Navidad", "color": "#E8705E", "color_claro": "#F8CDC6", "color_oscuro": "#A3301F", "cobertura_dias": 20, "valor_contenedor": [45000, 110000], "estacionalidad": [0.25, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.2, 1.0, 2.4]}
   ],
   "_proveedores": "Proveedores ficticios. origen: puerto, aeropuerto o punto de partida en carretera. cargas_mes: contenedores o camiones al mes de media. aereo: parte de los pedidos que va por avión (desde el aeropuerto indicado).",
   "proveedores": [
@@ -141,7 +141,7 @@
     {"nombre": "Atlántico", "lon": -35, "lat": 20, "zoom": 1.0},
     {"nombre": "Europa", "lon": 8, "lat": 42, "zoom": 2.6},
     {"nombre": "Mundo", "lon": 20, "lat": 10, "zoom": 0.85}
-  ], "vista_inicial": "Asia → Europa"},
+  ], "vista_inicial": "Asia → Europa", "animado": false},
   "simulacion": {
     "semilla": 2027,
     "inicio": "2025-10-01",

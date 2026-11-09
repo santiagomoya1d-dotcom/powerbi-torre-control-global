@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "displayName": "Panel: ayuda",
+  "name": "bmPanelAyuda",
+  "options": {
+    "applyOnlyToTargetVisuals": true,
+    "targetVisualNames": [
+      "panelTransito",
+      "panelExposicion",
+      "panelRetraso",
+      "panelAyuda",
+      "panelCalendario",
+      "calMes",
+      "calDia",
+      "btnCerrarPanel"
+    ],
+    "suppressData": true
+  },
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "torre",
+    "sections": {
+      "torre": {
+        "visualContainers": {
+          "panelTransito": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "panelExposicion": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "panelRetraso": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "panelAyuda": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {}
+            }
+          },
+          "panelCalendario": {
+            "singleVisual": {
+              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "calMes": {
+            "singleVisual": {
+              "visualType": "advancedSlicerVisual",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "calDia": {
+            "singleVisual": {
+              "visualType": "advancedSlicerVisual",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "btnCerrarPanel": {
+            "singleVisual": {
+              "visualType": "actionButton",
+              "objects": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,3 +2,5 @@
 expression CarpetaDatos = "D:\PBIP Torre Control\Prj2_TorreControl\datos\" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
 	lineageTag: 988d3b94-27d1-4adc-a73d-68e5e8acbb78
 
+	annotation PBI_ResultType = Text
+
