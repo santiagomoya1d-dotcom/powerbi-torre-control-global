@@ -11,8 +11,9 @@ botones, los paneles, los marcadores y las páginas Mar, Aire y Carretera se dis
 se tocan. Con --nueva escribe la página base (tarjetas, globo, segmentadores y curva) sin botones ni paneles: los
 marcadores que apuntan a ellos dejarían de funcionar.
 
-Lee de los archivos que ya guardó Power BI las versiones de esquema y los identificadores de
-Deneb y HTML Content, para escribir lo mismo que escribiría Desktop.
+Lee de los archivos que ya guardó Power BI las versiones de esquema, para escribir lo mismo que escribiría Desktop.
+Deneb y HTML Content son las ediciones certificadas de AppSource: el informe solo las nombra (publicCustomVisuals en
+report.json) y Power BI las descarga al abrirlo.
 """
 from __future__ import annotations
 
@@ -38,6 +39,9 @@ ANTIGUOS = ("TemaTorreOscuro.json", "FondoTorre.png")   # recursos del diseño o
 LETRA = "'Segoe UI Variable Display', 'Segoe UI', sans-serif"
 TINTA, LIMA, PAPEL, TARJETA, LINEA, GRIS = "#161616", "#CFE24F", "#ECEEEA", "#F7F8F5", "#E2E5DF", "#8A8F87"
 ESQ = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition"
+# Objetos visuales certificados de AppSource (funcionan donde el administrador solo admite visuales certificados).
+DENEB = "deneb7E15AEF80B9E4D4F8E12924291ECE89A"            # Deneb
+HTML = "htmlContent443BE3AD55E043BF878BED274D3A6865"        # HTML Content Secure, la edición certificada (antes «lite»)
 
 
 def leer(p: Path):
@@ -128,22 +132,6 @@ def filtro_in(tabla: str, campo: str, valor_literal: str):
 
 
 # --------------------------------------------------------------- objetos visuales
-def identificador(nombre: str) -> str:
-    rep = DEF / "report.json"
-    ids = []
-    if rep.exists():
-        r = leer(rep)
-        ids += list(r.get("publicCustomVisuals", []))
-        for paquete in r.get("resourcePackages", []):
-            ids += [paquete.get("name", "")] + [i.get("name", "") for i in paquete.get("items", [])]
-    ids += [leer(f).get("visual", {}).get("visualType", "") for f in DEF.rglob("visual.json")]
-    ids += [c.name for c in (INFORME / "CustomVisuals").glob("*")] if (INFORME / "CustomVisuals").exists() else []
-    for i in ids:
-        if nombre.lower() in i.lower():
-            return i.replace(".pbiviz.json", "")
-    raise SystemExit(f"No encuentro el objeto visual {nombre} en el informe: impórtalo y guarda.")
-
-
 def html(nombre, x, y, ancho, alto, z, medida, guid):
     return visual(nombre, x, y, ancho, alto, z, {
         "visualType": guid,
@@ -261,13 +249,20 @@ def registrar_recursos() -> None:
         paquetes.append(reg)
     reg["items"] = [i for i in reg.get("items", []) if i.get("name") not in (TEMA, *ANTIGUOS)]
     reg["items"].append({"name": TEMA, "path": TEMA, "type": "CustomTheme"})
-    escribir(rep_path, rep)
+    # Deneb y HTML Content, como visuales públicos de AppSource (Desktop los escribe justo antes de resourcePackages)
+    publicos = [v for v in rep.get("publicCustomVisuals", []) if v not in (DENEB, HTML)] + [DENEB, HTML]
+    ordenado = {}
+    for clave, valor in rep.items():
+        if clave == "resourcePackages":
+            ordenado["publicCustomVisuals"] = publicos
+        if clave != "publicCustomVisuals":
+            ordenado[clave] = valor
+    escribir(rep_path, ordenado)
 
 
 # --------------------------------------------------------------------- página
 def main() -> None:
-    g_deneb = identificador("deneb")
-    g_html = identificador("htmlContent")
+    g_deneb, g_html = DENEB, HTML
     ruta_escena = Path(ARGS.escena) if ARGS.escena else RAIZ / "globo" / "torre_globo.vega.json"
     spec = json.dumps(json.loads(ruta_escena.read_text(encoding="utf-8")), ensure_ascii=False, separators=(",", ":"))
     registrar_recursos()
@@ -276,7 +271,7 @@ def main() -> None:
     if (paginas / PAGINA).exists() and not ARGS.nueva:
         for f in (paginas / PAGINA / "visuals").glob("*/visual.json"):
             v = leer(f)
-            if v.get("visual", {}).get("visualType") == g_deneb:
+            if "deneb" in v.get("visual", {}).get("visualType", "").lower():   # el de AppSource o uno importado
                 v["visual"]["objects"]["vega"][0]["properties"]["jsonSpec"] = texto(spec)
                 escribir(f, v)
                 print(f"Globo actualizado en {f.parent.name} y tema registrado; el resto de la página no se toca.")

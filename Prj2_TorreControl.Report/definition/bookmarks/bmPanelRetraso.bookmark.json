@@ -24,7 +24,7 @@
         "visualContainers": {
           "panelTransito": {
             "singleVisual": {
-              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "visualType": "htmlContent443BE3AD55E043BF878BED274D3A6865",
               "objects": {},
               "display": {
                 "mode": "hidden"
@@ -33,7 +33,7 @@
           },
           "panelExposicion": {
             "singleVisual": {
-              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "visualType": "htmlContent443BE3AD55E043BF878BED274D3A6865",
               "objects": {},
               "display": {
                 "mode": "hidden"
@@ -42,13 +42,13 @@
           },
           "panelRetraso": {
             "singleVisual": {
-              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "visualType": "htmlContent443BE3AD55E043BF878BED274D3A6865",
               "objects": {}
             }
           },
           "panelAyuda": {
             "singleVisual": {
-              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "visualType": "htmlContent443BE3AD55E043BF878BED274D3A6865",
               "objects": {},
               "display": {
                 "mode": "hidden"
@@ -57,7 +57,7 @@
           },
           "panelCalendario": {
             "singleVisual": {
-              "visualType": "STANDALONEhtmlContent443BE3AD55E043BF878BED274D3A6855",
+              "visualType": "htmlContent443BE3AD55E043BF878BED274D3A6865",
               "objects": {},
               "display": {
                 "mode": "hidden"

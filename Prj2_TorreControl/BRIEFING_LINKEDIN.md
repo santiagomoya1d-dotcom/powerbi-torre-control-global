@@ -66,7 +66,9 @@ Por defecto abre el **5 de marzo de 2026**, en la cuarta semana del cierre simul
    - Power BI no trae mapas 3D que se puedan girar;
    - el globo es una proyección ortográfica dibujada con Vega, con giro, zoom, vistas animadas, la noche calculada con la posición del Sol para cada fecha y las rutas trazadas por círculo máximo sobre la esfera;
    - el mapa del mundo (Natural Earth) va dentro del propio objeto visual.
-4. **Tarjetas y paneles con HTML Content:** medidas DAX que devuelven HTML, CSS y SVG.
+4. **Tarjetas y paneles con HTML Content Secure:** medidas DAX que devuelven HTML, CSS y SVG.
+   - Deneb y HTML Content Secure son objetos visuales certificados por Microsoft, que Power BI descarga de AppSource.
+   - Por eso el informe también se abre en empresas que solo permiten visuales certificados.
 5. **Botones que parecen de una app:** los iconos y pastillas se dibujan en HTML y encima llevan botones nativos transparentes de Power BI con marcadores. Así funcionan el menú de páginas, los paneles de detalle, el calendario, la ayuda y el cambio de escenario.
 6. **Rendimiento:** la curva del año lee una tabla puente precalculada (una consulta para los 365 días en vez de una por día) y el globo solo se redibuja al moverlo.
 7. **Diseño:** estilo claro de aplicación moderna (tinta, lima y gris salvia, letra Segoe UI Variable).
@@ -119,10 +121,14 @@ Por defecto abre el **5 de marzo de 2026**, en la cuarta semana del cierre simul
 - **No es 3D real ni un motor de videojuego:** es una proyección ortográfica dibujada con Vega dentro de Power BI. Se puede decir «globo 3D interactivo».
 - **Las rutas y los barcos no están animados de forma continua:** el globo se mueve cuando lo giras, lo acercas o cambias de vista o de día. No digas que los barcos «navegan en directo».
 - **Deneb, HTML Content y el mapa son de terceros** (licencias MIT, MIT e ISC, con datos de Natural Earth en dominio público).
+- **Lo certificado son los dos objetos visuales, no el informe.** No digas que Microsoft certificó el proyecto.
+- **Hace falta conexión al abrirlo:** Power BI descarga los dos visuales de AppSource. No digas que funciona sin internet.
 
 ## 9. Glosario rápido
 
 - **Deneb:** objeto visual de Power BI para dibujar con Vega o Vega-Lite.
+- **HTML Content Secure:** la edición certificada de HTML Content. Limpia el HTML antes de pintarlo: nada de scripts ni de recursos de internet.
+- **Visual certificado:** objeto visual de AppSource que Microsoft ha revisado. Algunas empresas solo permiten estos.
 - **Proyección ortográfica:** la forma de dibujar una esfera tal como se vería desde el espacio.
 - **Círculo máximo:** el camino más corto entre dos puntos de la esfera. Por eso las rutas aéreas se ven curvas.
 - **Terminador:** la línea que separa el día de la noche.

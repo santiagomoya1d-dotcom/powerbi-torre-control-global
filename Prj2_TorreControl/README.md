@@ -40,7 +40,7 @@ Resultado con la configuración de serie: 2.672 cargas al año por escenario (14
 - Grupo «5 · Globo»: una fila por viaje en ruta con posición, rumbo, estado y ficha. En blanco si ese día no se mueve. `En foco` deja pasar solo los desviados cuando está pulsada la pastilla de la tarjeta del escenario.
 - `Tránsito diario (€)` y `(Base)`: la curva del año, leída de la tabla oculta `Envios por día` (un registro por envío y día en tránsito).
 - Grupo «6 · Tablas»: `En tránsito ahora`, `Días previstos` y `Días reales (60 d)`, para las tablas de las páginas Mar, Aire y Carretera.
-- Grupo «7 · HTML»: una medida por tarjeta (`Barra lateral`, `Cabecera`, `En tránsito`, `Exposición`, `Servicio`, `Escenario`, `Fichas`, `Vías`, `Alertas`, `Llegadas`, `Leyenda`), por panel (`Panel tránsito`, `Panel retraso`, `Panel exposición`, `Panel calendario`, `Panel ayuda`) y la barra y la cabecera de cada página de modo. Devuelven HTML, CSS y SVG para HTML Content; cada una lleva solo el CSS que usa. `HTML · Estilo` guarda la hoja completa.
+- Grupo «7 · HTML»: una medida por tarjeta (`Barra lateral`, `Cabecera`, `En tránsito`, `Exposición`, `Servicio`, `Escenario`, `Fichas`, `Vías`, `Alertas`, `Llegadas`, `Leyenda`), por panel (`Panel tránsito`, `Panel retraso`, `Panel exposición`, `Panel calendario`, `Panel ayuda`) y la barra y la cabecera de cada página de modo. Devuelven HTML, CSS y SVG para HTML Content Secure, la edición certificada. Esa edición limpia el HTML: solo admite las etiquetas y los atributos de su lista, y nada de `url()` externas ni scripts. Cada medida lleva solo el CSS que usa. `HTML · Estilo` guarda la hoja completa.
 
 ## El globo
 

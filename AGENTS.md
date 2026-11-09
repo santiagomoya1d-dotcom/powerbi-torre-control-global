@@ -82,6 +82,12 @@ Todas terminan con `python construir.py`, que se lanza desde `Prj2_TorreControl/
 - **Calendario sin relacionar.** El día se elige pinchando la curva o con los selectores de mes y día del panel del calendario. «Fecha elegida» resuelve las tres cosas (un día, un mes suelto o un día del mes suelto) y, sin nada elegido, usa el día por defecto. Las medidas calculan con `[Momento]`, que es el mediodía de ese día.
 - **La curva del año** lee la tabla oculta `Envios por día` (un registro por envío y día en tránsito), con `[Tránsito diario (€)]`: una sola consulta para los 365 días en vez de una por día.
 - **Botones sobre HTML.** Los iconos y pastillas se dibujan en las medidas HTML; encima de cada uno hay un botón o un segmentador nativo sin relleno. Las medidas pintan su estado (icono activo, pastilla encendida) leyendo los filtros, por ejemplo `ISFILTERED ( 'Foco desvío' )`. Si mueves una tarjeta, mueve también su botón.
+- **Objetos visuales certificados.**
+  - Son Deneb (`deneb7E15AEF80B9E4D4F8E12924291ECE89A`) y HTML Content Secure (`htmlContent443BE3AD55E043BF878BED274D3A6865`), de AppSource.
+  - El informe solo los nombra en `report.json` (`publicCustomVisuals`), y Power BI los descarga al abrirlo.
+  - No importes las versiones standalone ni la edición normal de HTML Content: cambian el identificador del visual y no están certificadas.
+  - HTML Content Secure limpia el HTML antes de pintarlo. Solo pasan las etiquetas y los atributos de su lista; quita las `url()` externas, `attr()`, los scripts, los atributos `on…` y los recursos remotos. Las reglas están en su [documentación](https://github.com/dm-p/powerbi-visuals-html-content/blob/main/docs/sanitization-rules.md).
+  - Deneb certificado no carga nada de internet: los datos y el mapa van dentro de la especificación.
 - **Vega dentro de Deneb.**
   - Las transformaciones `geoshape` de una marca leen el campo como `datum.campo` (por ejemplo, `field: 'datum.geo'`).
   - La noche se construye como expresión de una señal.
