@@ -83,10 +83,14 @@ def med(tabla: str, campo: str):
 
 
 def proy(campo: dict, nombre_corto: str | None = None):
+    """Proyección de un campo; con nombre_corto, ese es el nombre que se ve (leyenda, información sobre herramientas)."""
     tipo = "Column" if "Column" in campo else "Measure"
     tabla = campo[tipo]["Expression"]["SourceRef"]["Entity"]
     prop = campo[tipo]["Property"]
-    return {"field": campo, "queryRef": f"{tabla}.{prop}", "nativeQueryRef": nombre_corto or prop}
+    p = {"field": campo, "queryRef": f"{tabla}.{prop}", "nativeQueryRef": nombre_corto or prop}
+    if nombre_corto:
+        p["displayName"] = nombre_corto
+    return p
 
 
 def contenedor(fondo: str | None = None, radio: int = 0, titulo: str | None = None, relleno: int = 0):
@@ -98,6 +102,7 @@ def contenedor(fondo: str | None = None, radio: int = 0, titulo: str | None = No
         "visualHeader": [{"properties": {"show": lit("false")}}],
         "padding": [{"properties": {k: lit(f"{relleno}D") for k in ("top", "bottom", "left", "right")}}],
         "title": [{"properties": {"show": lit("false")}}],
+        "subTitle": [{"properties": {"show": lit("false")}}],
     }
     if fondo:
         c["background"] = [{"properties": {"show": lit("true"), "color": color(fondo), "transparency": lit("0D")}}]
@@ -213,12 +218,12 @@ def botonera(nombre, x, y, ancho, alto, z, tabla, campo, valor_literal, columnas
 
 
 def curva(nombre, x, y, ancho, alto, z):
-    escenario, base = "Valor en tránsito (€)", "Valor en tránsito (Base)"
+    escenario, base = "Tránsito diario (€)", "Tránsito diario (Base)"   # leen la tabla puente Envios por día
     return visual(nombre, x, y, ancho, alto, z, {
         "visualType": "lineChart",
         "query": {"queryState": {
             "Category": {"projections": [proy(col("Calendario", "Fecha")) | {"active": True}]},
-            "Y": {"projections": [proy(med("Medidas", escenario), "En el escenario elegido"), proy(med("Medidas", base), "Escenario Base")]},
+            "Y": {"projections": [proy(med("Medidas", escenario), "Escenario elegido"), proy(med("Medidas", base), "Base")]},
         }},
         "objects": {
             "dataPoint": [{"properties": {"fill": color(TINTA)}, "selector": {"metadata": f"Medidas.{escenario}"}},
@@ -302,7 +307,7 @@ def main() -> None:
         html("barraLateral", 20, 20, 76, 1040, 500, "HTML · Barra lateral", g_html),
         html("cabecera", 124, 20, 1416, 112, 1000, "HTML · Cabecera", g_html),
         botonera("selectorEscenario", 1556, 40, 344, 52, 2000, "Escenarios", "Escenario", f"'{esc_def}'", n_esc, letra=13),
-        botonera("selectorCategoria", 124, 144, 952, 40, 2500, "Categorías", "Categoría", None, len(CFG.categorias), unica=False),
+        botonera("selectorCategoria", 124, 144, 952, 40, 2500, "Categorías", "Nombre corto", None, len(CFG.categorias), unica=False),
         botonera("selectorModo", 1092, 144, 368, 40, 2600, "Modos", "Modo", None, 3, unica=False),
         html("kpiTransito", 124, 200, 424, 248, 3000, "HTML · En tránsito", g_html),
         html("kpiExposicion", 124, 464, 424, 210, 3100, "HTML · Exposición", g_html),

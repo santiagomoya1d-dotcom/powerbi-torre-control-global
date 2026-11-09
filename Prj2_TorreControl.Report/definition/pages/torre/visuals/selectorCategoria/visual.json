@@ -23,11 +23,12 @@
                       "Entity": "Categorías"
                     }
                   },
-                  "Property": "Categoría"
+                  "Property": "Nombre corto"
                 }
               },
-              "queryRef": "Categorías.Categoría",
-              "nativeQueryRef": "Categoría"
+              "queryRef": "Categorías.Nombre corto",
+              "nativeQueryRef": "Categoría",
+              "displayName": "Categoría"
             }
           ]
         }

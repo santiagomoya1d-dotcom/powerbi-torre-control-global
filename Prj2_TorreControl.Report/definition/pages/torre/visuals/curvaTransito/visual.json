@@ -46,7 +46,8 @@
                 }
               },
               "queryRef": "Medidas.Tránsito diario (€)",
-              "nativeQueryRef": "En el escenario elegido"
+              "nativeQueryRef": "Escenario elegido",
+              "displayName": "Escenario elegido"
             },
             {
               "field": {
@@ -60,7 +61,8 @@
                 }
               },
               "queryRef": "Medidas.Tránsito diario (Base)",
-              "nativeQueryRef": "Escenario Base"
+              "nativeQueryRef": "Base",
+              "displayName": "Base"
             }
           ]
         }
@@ -455,6 +457,19 @@
               "expr": {
                 "Literal": {
                   "Value": "'left'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }

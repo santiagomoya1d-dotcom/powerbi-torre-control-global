@@ -12,6 +12,7 @@ table Categorías
 		dataType: string
 		lineageTag: d74bedea-69e1-4c6c-8321-3fec09cbbc90
 		sourceColumn: Nombre corto
+		sortByColumn: Orden
 
 	column Color
 		dataType: string

@@ -139,6 +139,16 @@
               }
             }
           }
+        ],
+        "subTitle": [
+          {
+            "show": false
+          }
+        ],
+        "divider": [
+          {
+            "show": false
+          }
         ]
       }
     },
