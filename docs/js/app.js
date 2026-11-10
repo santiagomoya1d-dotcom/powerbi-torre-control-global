@@ -261,10 +261,12 @@ for (const p of informe.paginas) p._interacciones = p.interacciones || [];
 
 // ----------------------------------------------------------------------------------------- escala y arranque
 function ajustar() {
-  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  const exterior = document.getElementById("exterior");
+  const ancho = exterior.clientWidth, alto = exterior.clientHeight;   // la ventana menos la barra del pie
+  const s = Math.min(ancho / 1920, alto / 1080);
   lienzo.style.transform = `scale(${s})`;
-  lienzo.style.left = `${(innerWidth - 1920 * s) / 2}px`;
-  lienzo.style.top = `${(innerHeight - 1080 * s) / 2}px`;
+  lienzo.style.left = `${(ancho - 1920 * s) / 2}px`;
+  lienzo.style.top = `${(alto - 1080 * s) / 2}px`;
 }
 addEventListener("resize", ajustar);
 addEventListener("hashchange", () => { const h = location.hash.slice(1); if (h && h !== estado.pagina) irA(h); });

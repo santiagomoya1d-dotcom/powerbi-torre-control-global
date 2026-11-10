@@ -14,7 +14,18 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-#exterior { position: fixed; inset: 0; overflow: hidden; }
+#exterior { position: fixed; inset: 0 0 var(--pie) 0; overflow: hidden; }
+
+/* Barra al pie con el enlace al repositorio */
+:root { --pie: 30px; }
+#pie {
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--pie); box-sizing: border-box; padding: 0 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #F7F8F5; border-top: 1px solid #E2E5DF; color: #6F746C; font-size: 12px; white-space: nowrap;
+}
+#pie a { color: #161616; text-decoration: none; font-weight: 600; }
+#pie a:hover, #pie a:focus-visible { text-decoration: underline; }
+@media (max-width: 640px) { #pie .que { display: none; } #pie { justify-content: flex-end; } }
 
 #lienzo {
   position: absolute;
